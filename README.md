@@ -42,6 +42,15 @@ exec(open('/path/to/moon-orrery/td/build.py').read(), {'TD_DIR': '/path/to/moon-
 It builds `/project1/orrery` and saves `td/orrery.tox` (without a pairing code; each project
 makes its own). See [td/README.md](td/README.md) for the protocol.
 
+## License
+
+Free and open source under the [MIT License](LICENSE): use it in personal and commercial work,
+change it, share it.
+
+The license covers the code, not the brand. The name "Orrery", the Orrery icon and the Pulsar
+Interactive name and logo are not licensed for reuse: a fork or a published copy of the app needs
+its own name and icon.
+
 ---
 
 Made by [Pulsar Interactive](https://pulsarinteractive.ai). TouchDesigner is a trademark of
