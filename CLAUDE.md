@@ -12,3 +12,4 @@ Orrery can replace it.
 - TouchDesigner: `td/*.py` → `td/build.py` → `td/orrery.tox`. Rebuild the .tox after editing.
 - Pairing: a 6-digit code in the WebSocket URL; unpaired clients get nothing.
 - Never use "TouchDesigner" in the product name (Derivative's trademark).
+- Free and MIT (decided 2026-11-21): no paid tier. Its value is visibility and leads for Pulsar. The name, icon and Pulsar logo are not licensed (README).
