@@ -58,14 +58,14 @@ All on the component's **Orrery** page:
 | Phones Connected | | how many phones are paired now |
 | Port | 9980 | change it if 9980 is taken |
 | Controls In | `..` | the COMP whose children are listed |
-| Page Name | Controls | the parameter page the app reads |
+| Page Name | Controls | the parameter page the remote reads |
 | Refresh Address | | reads the address again after you change networks |
 
 ## Safe to hand over
 
 - A phone needs the pairing code. Without it, it can't see or change anything.
 - Only parameters on a **Controls** page can be read or changed. The rest of the project is
-  invisible to the app.
+  invisible to the remote.
 - **New Pairing Code** locks out every phone at once, for example after a show.
 - Each project that loads the `.tox` makes its own code.
 
@@ -77,7 +77,7 @@ All on the component's **Orrery** page:
 - **Address changed?** Press **Refresh Address** (or **Show QR** again) after changing networks.
 - **No QR code?** The QR page needs the internet on the computer to draw it. The address and
   code are shown under it either way.
-- **Nothing in the list?** The app only lists COMPs next to the component that have a page named
+- **Nothing in the list?** The remote only lists COMPs next to the component that have a page named
   exactly **Controls** (or whatever **Page Name** says).
 
 ## Develop
@@ -93,9 +93,6 @@ exec(open('/path/to/moon-orrery/td/build.py').read(), dict(globals(), TD_DIR='/p
 It builds `/project1/orrery` and saves `td/orrery.tox`. The protocol is plain JSON over a
 WebSocket, documented in [td/README.md](td/README.md), so you can write your own client.
 
-The Expo app in the repo root is a parked native version of the remote (`npx expo start`). The web
-remote is the one that ships.
-
 Issues and pull requests are welcome.
 
 ## License
@@ -104,7 +101,7 @@ Free and open source under the [MIT License](LICENSE): use it in personal and co
 change it, share it.
 
 The license covers the code, not the brand. The name "Orrery", the Orrery icon and the Pulsar
-Interactive name and logo are not licensed for reuse: a fork or a published copy of the app needs
+Interactive name and logo are not licensed for reuse: a fork or a published copy needs
 its own name and icon.
 
 ---
