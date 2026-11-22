@@ -1,6 +1,6 @@
 # Builds the Orrery component from the files next to this script and saves it as orrery.tox.
 # Run it in TouchDesigner's Textport:
-#   exec(open('/path/to/moon-orrery/td/build.py').read(), dict(globals(), TD_DIR='/path/to/moon-orrery/td'))
+#   exec(open('/path/to/orrery/td/build.py').read(), dict(globals(), TD_DIR='/path/to/orrery/td'))
 # It replaces /project1/orrery if there is one. Drag td/orrery.tox into any project to use it.
 import os
 

@@ -87,7 +87,7 @@ rest is the component's Python. After changing anything there, rebuild the compo
 TouchDesigner's Textport (any project open):
 
 ```python
-exec(open('/path/to/moon-orrery/td/build.py').read(), dict(globals(), TD_DIR='/path/to/moon-orrery/td'))
+exec(open('/path/to/orrery/td/build.py').read(), dict(globals(), TD_DIR='/path/to/orrery/td'))
 ```
 
 It builds `/project1/orrery` and saves `td/orrery.tox`. The protocol is plain JSON over a
