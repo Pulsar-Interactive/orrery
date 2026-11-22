@@ -1,46 +1,102 @@
 # Orrery
 
-Control TouchDesigner from your phone. Orrery turns the parameters you already built into a
-phone remote: no layouts to draw, no OSC addresses to map.
+**Your TouchDesigner parameters, on your phone.**
 
-Every COMP with a custom parameter page named **Controls** shows up in the app, and every
-parameter on that page becomes a control (sliders, toggles, menus, buttons). Header
-parameters start a group. Nothing else in your project can be read or changed.
+Orrery is a free phone remote for TouchDesigner. You don't draw a layout or map OSC addresses.
+The parameters you already built become sliders, switches and buttons. Hand the phone to a
+client, a VJ or the venue tech, and they can only touch what you chose to show.
 
-## Use it
+There is no app to install. The component serves the remote itself: the phone scans a QR code
+and opens it in its browser.
 
-1. Drag `td/orrery.tox` into your project, next to the COMPs you want to control.
-2. On its **Orrery** page you'll find the **Address** and a 6-digit **Pairing Code**.
-3. In the app, enter both and tap Connect. The phone remembers the machine.
+> **Status: early (v0.1).** Feedback and issues are welcome.
 
-Phone and computer must be on the same network. **New Pairing Code** disconnects every phone.
+## Quick start
 
-Settings on the Orrery page:
+1. **Add the component.** Drag [`td/orrery.tox`](td/orrery.tox) into your project, next to the
+   COMPs you want to control.
+2. **Pick your controls.** On any of those COMPs, add a custom parameter page named
+   **Controls** (right-click the COMP › Customize Component…). Put the parameters you want on
+   the phone on that page.
+3. **Pair the phone.** Press **Show QR** on the component's **Orrery** page and scan the code
+   with the phone's camera. Or open the **Address** in the phone's browser and type the 6-digit
+   **Pairing Code**.
 
-| Parameter | Default | |
+That's it. The phone remembers the code, and changes made in TouchDesigner show up on the phone
+right away. Add the page to the home screen to open it like an app.
+
+The phone and the computer must be on the same network.
+
+## What becomes what
+
+| Parameter on the Controls page | On the phone |
+|---|---|
+| Float | slider across the parameter's range |
+| Int | − / + stepper |
+| Toggle | switch |
+| Momentary | button you hold |
+| Pulse | button you tap |
+| Menu, String Menu | row of choices |
+| Header | a group title for the parameters after it |
+| Read-only parameter | shown, can't be changed |
+
+Sliders and steppers show **Reset** when the value is off its default. Any other parameter
+type is shown as its value, read only. The phone shows each parameter's **Label**, so give it a
+friendly one.
+
+## Settings
+
+All on the component's **Orrery** page:
+
+| Parameter | Default | What it does |
 |---|---|---|
 | Active | on | runs the server |
-| Port | 9980 | |
+| Show QR | | opens a QR code on this computer for the phone to scan |
+| Address | | the page to open on the phone (read only) |
+| Pairing Code | | the code the phone needs (read only) |
+| New Pairing Code | | makes a new code and disconnects every phone |
+| Phones Connected | | how many phones are paired now |
+| Port | 9980 | change it if 9980 is taken |
 | Controls In | `..` | the COMP whose children are listed |
 | Page Name | Controls | the parameter page the app reads |
+| Refresh Address | | reads the address again after you change networks |
+
+## Safe to hand over
+
+- A phone needs the pairing code. Without it, it can't see or change anything.
+- Only parameters on a **Controls** page can be read or changed. The rest of the project is
+  invisible to the app.
+- **New Pairing Code** locks out every phone at once, for example after a show.
+- Each project that loads the `.tox` makes its own code.
+
+## Can't connect?
+
+- **Same network?** The phone and the computer must be on the same Wi-Fi. Guest and venue
+  networks often block devices from reaching each other. A phone hotspot works.
+- **Firewall?** On macOS, allow TouchDesigner to accept incoming connections.
+- **Address changed?** Press **Refresh Address** (or **Show QR** again) after changing networks.
+- **No QR code?** The QR page needs the internet on the computer to draw it. The address and
+  code are shown under it either way.
+- **Nothing in the list?** The app only lists COMPs next to the component that have a page named
+  exactly **Controls** (or whatever **Page Name** says).
 
 ## Develop
 
-```bash
-npm install
-npx expo start        # scan with Expo Go
-npm run typecheck && npx expo lint
-```
-
-The TouchDesigner component is built from the Python files in `td/`. After changing them, run
-in TouchDesigner's Textport (with any project open):
+Everything lives in `td/`: the phone remote is one HTML file (`remote.html`, no build step), the
+rest is the component's Python. After changing anything there, rebuild the component in
+TouchDesigner's Textport (any project open):
 
 ```python
-exec(open('/path/to/moon-orrery/td/build.py').read(), {'TD_DIR': '/path/to/moon-orrery/td'})
+exec(open('/path/to/moon-orrery/td/build.py').read(), dict(globals(), TD_DIR='/path/to/moon-orrery/td'))
 ```
 
-It builds `/project1/orrery` and saves `td/orrery.tox` (without a pairing code; each project
-makes its own). See [td/README.md](td/README.md) for the protocol.
+It builds `/project1/orrery` and saves `td/orrery.tox`. The protocol is plain JSON over a
+WebSocket, documented in [td/README.md](td/README.md), so you can write your own client.
+
+The Expo app in the repo root is a parked native version of the remote (`npx expo start`). The web
+remote is the one that ships.
+
+Issues and pull requests are welcome.
 
 ## License
 
@@ -53,5 +109,6 @@ its own name and icon.
 
 ---
 
-Made by [Pulsar Interactive](https://pulsarinteractive.ai). TouchDesigner is a trademark of
-Derivative; Orrery is not affiliated with Derivative.
+Made by [Pulsar Interactive](https://pulsarinteractive.ai), who build interactive shows and
+installations. TouchDesigner is a trademark of Derivative; Orrery is not affiliated with
+Derivative.

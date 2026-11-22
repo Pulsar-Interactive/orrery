@@ -1,6 +1,6 @@
 # Builds the Orrery component from the files next to this script and saves it as orrery.tox.
 # Run it in TouchDesigner's Textport:
-#   exec(open('/path/to/moon-orrery/td/build.py').read(), {'TD_DIR': '/path/to/moon-orrery/td'})
+#   exec(open('/path/to/moon-orrery/td/build.py').read(), dict(globals(), TD_DIR='/path/to/moon-orrery/td'))
 # It replaces /project1/orrery if there is one. Drag td/orrery.tox into any project to use it.
 import os
 
@@ -8,7 +8,7 @@ src = TD_DIR  # noqa: F821 (passed in by the exec call above)
 home = op('/project1')
 
 def text(name):
-	with open(os.path.join(src, name)) as f:
+	with open(os.path.join(src, name), encoding='utf-8') as f:
 		return f.read()
 
 old = home.op('orrery')
@@ -21,6 +21,7 @@ comp.comment = 'Orrery: control this project from a phone. Pair with the address
 
 page = comp.appendCustomPage('Orrery')
 page.appendToggle('Active', label='Active')[0].default = True
+page.appendPulse('Showqr', label='Show QR')
 p = page.appendStr('Address', label='Address')[0]
 p.readOnly = True
 p = page.appendStr('Code', label='Pairing Code')[0]
@@ -46,6 +47,16 @@ cb = comp.create(textDAT, 'callbacks')
 cb.text = text('orrery_callbacks.py')
 cb.nodeX, cb.nodeY = 0, 0
 
+# the phone remote, served at http://ADDRESS:PORT/
+rp = comp.create(textDAT, 'remote')
+rp.text = text('remote.html')
+rp.nodeX, rp.nodeY = 0, 150
+
+# the QR page Show QR opens on this computer
+pp = comp.create(textDAT, 'pairpage')
+pp.text = text('pair.html')
+pp.nodeX, pp.nodeY = 200, 150
+
 server = comp.create(webserverDAT, 'server')
 server.par.callbacks = 'callbacks'
 server.par.port.expr = "parent().par.Port"
@@ -62,7 +73,7 @@ pe.nodeX, pe.nodeY = 0, -150
 st = comp.create(parameterexecuteDAT, 'settings')
 st.text = text('orrery_settings.py')
 ops_par(st).val = '..'
-st.par.pars = 'Port Root Page Newcode Refresh'
+st.par.pars = 'Port Root Page Newcode Refresh Showqr'
 st.par.valuechange = True
 st.par.onpulse = True
 st.nodeX, st.nodeY = 200, -150
@@ -79,4 +90,4 @@ comp.par.Code = ''
 comp.unstore('*')
 comp.save(tox)
 ex.module.onStart()
-print('Orrery built and saved to %s. This project pairs at %s with code %s' % (tox, comp.par.Address, comp.par.Code))
+print('Orrery built and saved to %s. Open %s on a phone and enter %s, or press Show QR.' % (tox, comp.par.Address, comp.par.Code))

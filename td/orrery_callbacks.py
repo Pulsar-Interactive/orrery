@@ -5,7 +5,8 @@
 # like the component's Page parameter (default "Controls") shows up in the app, and every
 # parameter on that page becomes a control. Nothing else in the project can be read or changed.
 #
-# A phone connects to ws://ADDRESS:PORT/?code=CODE. A wrong code gets {"type": "denied"} and is
+# The phone opens http://ADDRESS:PORT/ (the `remote` page), which connects to
+# ws://ADDRESS:PORT/?code=CODE. A wrong code gets {"type": "denied"} and is
 # closed; nothing is sent to or accepted from it.
 #
 # Messages (JSON):
@@ -91,8 +92,7 @@ def address():
 		ip = '127.0.0.1'
 	finally:
 		s.close()
-	port = int(me_comp().par.Port)
-	return ip if port == 9980 else '%s:%d' % (ip, port)
+	return 'http://%s:%d' % (ip, int(me_comp().par.Port))
 
 def onWebSocketOpen(webServerDAT, client, uri):
 	code = parse_qs(urlparse(uri).query).get('code', [''])[0]
@@ -138,9 +138,19 @@ def onWebSocketReceiveText(webServerDAT, client, data):
 	return
 
 def onHTTPRequest(webServerDAT, request, response):
-	response['statusCode'] = 200
-	response['statusReason'] = 'OK'
-	response['data'] = 'Orrery is running. Open the Orrery app and pair with the code shown in TouchDesigner.'
+	# The phone remote is a single page (the `remote` DAT). It holds no secrets: the pairing code
+	# is checked when it opens the WebSocket.
+	path = urlparse(request.get('uri', '/')).path
+	if request.get('method', 'GET') == 'GET' and path in ('/', '/index.html'):
+		response['statusCode'] = 200
+		response['statusReason'] = 'OK'
+		response['Content-Type'] = 'text/html; charset=utf-8'
+		response['Cache-Control'] = 'no-store'
+		response['data'] = op('remote').text
+	else:
+		response['statusCode'] = 404
+		response['statusReason'] = 'Not Found'
+		response['data'] = 'Not found'
 	return response
 
 def onWebSocketReceiveBinary(webServerDAT, client, data):

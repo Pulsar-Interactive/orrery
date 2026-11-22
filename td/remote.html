@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0E1214">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Orrery</title>
+<!-- Orrery: the phone remote. The Orrery component serves this page and talks to it over a
+     WebSocket on the same address. One file, no build step. -->
+<style>
+:root {
+  --page: #0E1214; --raised: #161B1E; --line: #2A3236; --primary: #E8EDEF; --secondary: #9AA6AB;
+  --brand: #4FD3DE; --onbrand: #062124; --tint: rgba(79,211,222,0.12); --error: #F08A80;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+[hidden] { display: none !important; }
+html, body { margin: 0; background: var(--page); color: var(--primary); }
+body {
+  font: 16px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(24px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left));
+  max-width: 560px; margin: 0 auto; user-select: none; -webkit-user-select: none;
+}
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+header { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 44px; margin-bottom: 12px; }
+.word { font-weight: 700; font-size: 13px; letter-spacing: .3em; color: var(--brand); }
+.back { color: var(--brand); min-height: 44px; }
+.dot { font-size: 11px; letter-spacing: .08em; color: var(--secondary); display: flex; align-items: center; gap: 6px; }
+.dot::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--secondary); }
+.dot.live { color: var(--brand); } .dot.live::before { background: var(--brand); }
+.card { background: var(--raised); border: 1px solid var(--line); border-radius: 12px; padding: 16px; display: grid; gap: 16px; }
+h1 { font-size: 24px; line-height: 32px; margin: 0; }
+.group { font-size: 11px; letter-spacing: .08em; color: var(--secondary); padding-top: 4px; }
+.hint { font-size: 13px; line-height: 20px; color: var(--secondary); margin: 0; }
+.error { color: var(--error); }
+.row { display: flex; justify-content: space-between; align-items: center; gap: 12px; min-height: 28px; }
+.ctl { display: grid; gap: 10px; }
+.list button { display: flex; justify-content: space-between; align-items: center; width: 100%; min-height: 56px; text-align: left; border-top: 1px solid var(--line); }
+.list button:first-child { border-top: 0; }
+.list .chev { color: var(--secondary); }
+.val { font-variant-numeric: tabular-nums; color: var(--secondary); }
+.reset { font-size: 13px; color: var(--secondary); padding: 4px 0 4px 12px; }
+input[type=range] { width: 100%; height: 36px; accent-color: var(--brand); margin: 0; }
+.switch { width: 50px; height: 30px; border-radius: 15px; background: var(--line); position: relative; flex: none; transition: background .15s; }
+.switch::after { content: ""; position: absolute; left: 3px; top: 3px; width: 24px; height: 24px; border-radius: 50%; background: var(--primary); transition: transform .15s; }
+.switch[aria-checked=true] { background: var(--brand); }
+.switch[aria-checked=true]::after { transform: translateX(20px); }
+.ghost { border: 1px solid var(--line); border-radius: 6px; padding: 13px; font-size: 13px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; touch-action: none; }
+.ghost.down { background: var(--tint); border-color: var(--brand); color: var(--brand); }
+.segs { display: flex; flex-wrap: wrap; gap: 6px; }
+.segs button { flex: 1 1 auto; min-height: 44px; padding: 0 12px; border: 1px solid var(--line); border-radius: 6px; font-size: 14px; }
+.segs button[aria-pressed=true] { background: var(--tint); border-color: var(--brand); color: var(--brand); }
+.step { display: flex; align-items: center; gap: 12px; }
+.step button { width: 52px; height: 44px; border: 1px solid var(--line); border-radius: 6px; font-size: 20px; }
+.step .val { flex: 1; text-align: center; color: var(--primary); font-size: 18px; }
+.code { font: 600 28px/1 ui-monospace, Menlo, monospace; letter-spacing: .3em; text-align: center; width: 100%; padding: 14px 8px; background: var(--page); color: var(--primary); border: 1px solid var(--line); border-radius: 6px; }
+.primary { background: var(--brand); color: var(--onbrand); border-radius: 6px; padding: 14px; font-size: 14px; font-weight: 600; letter-spacing: .06em; }
+.primary:disabled { opacity: .4; }
+.footer { text-align: center; margin-top: 24px; }
+.footer a { color: var(--secondary); font-size: 12px; text-decoration: none; }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+</head>
+<body>
+<header>
+  <span id="left"><span class="word">ORRERY</span></span>
+  <span id="status" class="dot">CONNECTING</span>
+</header>
+<main id="main"></main>
+<p class="footer"><a href="https://github.com/Pulsar-Interactive/moon-orrery" target="_blank" rel="noopener">Orrery · free and open source · Pulsar Interactive</a></p>
+
+<script>
+'use strict';
+const KEY = 'orrery-code';
+const main = document.getElementById('main');
+const left = document.getElementById('left');
+const statusEl = document.getElementById('status');
+
+const store = {
+  get() { try { return localStorage.getItem(KEY); } catch { return null; } },
+  set(v) { try { v ? localStorage.setItem(KEY, v) : localStorage.removeItem(KEY); } catch {} },
+};
+
+// A code in the address (from the QR) is saved, then dropped from the address bar.
+const fromUrl = new URLSearchParams(location.search).get('code');
+if (fromUrl) { store.set(fromUrl); history.replaceState(null, '', location.pathname); }
+let code = store.get();
+
+let ws = null, retry = null, project = '', patches = [], current = null, panel = null;
+
+function el(tag, attrs = {}, ...kids) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k.startsWith('on')) e.addEventListener(k.slice(2), v);
+    else if (k === 'class') e.className = v;
+    else e.setAttribute(k, v);
+  }
+  e.append(...kids.filter((k) => k != null));
+  return e;
+}
+
+function setStatus(live) {
+  statusEl.className = live ? 'dot live' : 'dot';
+  statusEl.textContent = live ? 'LIVE' : 'RECONNECTING';
+}
+
+function send(msg) { if (ws && ws.readyState === 1) ws.send(JSON.stringify(msg)); }
+
+function connect() {
+  clearTimeout(retry);
+  if (!code) return showPair('');
+  ws = new WebSocket(`ws://${location.host}/?code=${encodeURIComponent(code)}`);
+  ws.onopen = () => { setStatus(true); send({ type: 'list' }); if (current) send({ type: 'get', op: current }); };
+  ws.onmessage = (e) => {
+    const msg = JSON.parse(e.data);
+    if (msg.type === 'denied') {
+      code = null; store.set(null); ws.onclose = null; ws.close();
+      return showPair('That code was not accepted. Enter the Pairing Code shown on the Orrery component.');
+    }
+    if (msg.type === 'list') { project = msg.project; patches = msg.patches; if (!current) showList(); }
+    if (msg.type === 'state' && msg.op === current) showPanel(msg);
+    if (msg.type === 'error' && current && msg.error.startsWith('nothing to control')) { current = null; showList(); }
+  };
+  ws.onclose = () => { setStatus(false); retry = setTimeout(connect, 2000); };
+}
+
+// Phones lock and drop the socket: reconnect as soon as the page is back.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && code && (!ws || ws.readyState > 1)) connect();
+});
+
+// Keep the screen on while the remote is in use (where the browser allows it).
+document.addEventListener('pointerdown', () => { navigator.wakeLock?.request('screen').catch(() => {}); }, { once: true });
+
+function showPair(error) {
+  current = null; panel = null;
+  statusEl.textContent = ''; statusEl.className = 'dot'; statusEl.hidden = true;
+  left.replaceChildren(el('span', { class: 'word' }, 'ORRERY'));
+  const input = el('input', { id: 'code', class: 'code', inputmode: 'numeric', autocomplete: 'one-time-code', maxlength: '6', placeholder: '······', 'aria-label': 'Pairing code' });
+  const go = el('button', { class: 'primary', disabled: '' }, 'CONNECT');
+  input.addEventListener('input', () => { input.value = input.value.replace(/\D/g, ''); go.disabled = input.value.length !== 6; });
+  const submit = () => { if (input.value.length === 6) { code = input.value; store.set(code); statusEl.hidden = false; connect(); } };
+  go.addEventListener('click', submit);
+  input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
+  main.replaceChildren(el('div', { class: 'card' },
+    el('h1', {}, 'Pair this phone'),
+    error ? el('p', { class: 'hint error' }, error) : el('p', { class: 'hint' }, 'Enter the Pairing Code shown on the Orrery component in TouchDesigner, or scan its QR code.'),
+    input, go));
+  input.focus();
+}
+
+function showList() {
+  panel = null;
+  left.replaceChildren(el('span', { class: 'word' }, 'ORRERY'));
+  const items = patches.map((p) => el('button', { onclick: () => open(p.op) },
+    el('span', {}, p.label), el('span', { class: 'chev' }, `${p.count} ›`)));
+  main.replaceChildren(el('div', { class: 'card' },
+    el('h1', {}, project || 'Controls'),
+    items.length ? el('div', { class: 'list' }, ...items)
+      : el('p', { class: 'hint' }, 'Nothing to control yet. In TouchDesigner, add a custom parameter page named Controls to a COMP next to the Orrery component.')));
+}
+
+function open(op) {
+  current = op;
+  send({ type: 'get', op });
+}
+
+function back() {
+  current = null;
+  showList();
+  send({ type: 'list' });
+}
+
+// Rebuilt only when the set of controls changes; otherwise each control updates in place, so a
+// change from TouchDesigner never yanks a slider out from under a finger.
+function showPanel(msg) {
+  const sig = msg.op + '|' + msg.controls.map((c) => c.name + ':' + c.style).join(',');
+  if (panel && panel.sig === sig) { msg.controls.forEach((c, i) => panel.updates[i](c)); return; }
+  const label = (patches.find((p) => p.op === msg.op) || {}).label || msg.op;
+  left.replaceChildren(el('button', { class: 'back', onclick: back, 'aria-label': 'Back to the list' }, '‹ ' + (project || 'Back')));
+  const updates = [], nodes = [];
+  for (const c of msg.controls) {
+    const [node, update] = control(msg.op, c);
+    nodes.push(node); updates.push(update); update(c);
+  }
+  panel = { sig, updates };
+  main.replaceChildren(el('div', { class: 'card' }, el('h1', {}, label), ...nodes));
+}
+
+function set(op, par, value) { send({ type: 'set', op, par, value }); }
+
+function fmt(v, c) { return c.style === 'Int' ? String(v) : Number(v).toFixed(c.max - c.min >= 10 ? 1 : 2); }
+
+function control(op, c) {
+  const nothing = () => {};
+  if (c.style === 'Header') return [el('div', { class: 'group' }, c.label.toUpperCase()), nothing];
+
+  if (c.readOnly || (typeof c.value !== 'number' && !['Toggle', 'Momentary', 'Pulse', 'Menu', 'StrMenu'].includes(c.style))) {
+    const v = el('span', { class: 'val' });
+    return [el('div', { class: 'row' }, el('span', {}, c.label), v), (n) => { v.textContent = n.value ?? ''; }];
+  }
+
+  if (c.style === 'Toggle') {
+    const sw = el('button', { class: 'switch', role: 'switch', 'aria-label': c.label });
+    let on = false;
+    sw.addEventListener('click', () => { on = !on; sw.setAttribute('aria-checked', on); set(op, c.name, on); });
+    return [el('div', { class: 'row' }, el('span', {}, c.label), sw), (n) => { on = !!n.value; sw.setAttribute('aria-checked', on); }];
+  }
+
+  if (c.style === 'Momentary') {
+    const b = el('button', { class: 'ghost' }, c.label + ' · hold');
+    let held = false;
+    const down = (e) => { e.preventDefault(); if (!held) { held = true; b.classList.add('down'); set(op, c.name, true); } };
+    const up = () => { if (held) { held = false; b.classList.remove('down'); set(op, c.name, false); } };
+    b.addEventListener('pointerdown', down);
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach((t) => b.addEventListener(t, up));
+    b.addEventListener('contextmenu', (e) => e.preventDefault());
+    return [b, nothing];
+  }
+
+  if (c.style === 'Pulse') {
+    const b = el('button', { class: 'ghost' }, c.label);
+    b.addEventListener('click', () => { set(op, c.name); b.classList.add('down'); setTimeout(() => b.classList.remove('down'), 150); });
+    return [b, nothing];
+  }
+
+  if (c.style === 'Menu' || c.style === 'StrMenu') {
+    const btns = (c.options || []).map(([name, lbl]) => {
+      const b = el('button', { 'aria-pressed': 'false' }, lbl);
+      b.addEventListener('click', () => set(op, c.name, name));
+      b.dataset.name = name;
+      return b;
+    });
+    return [el('div', { class: 'ctl' }, el('span', {}, c.label), el('div', { class: 'segs' }, ...btns)),
+      (n) => btns.forEach((b) => b.setAttribute('aria-pressed', b.dataset.name === n.value))];
+  }
+
+  const min = c.min ?? 0, max = c.max ?? 1, isInt = c.style === 'Int';
+  const v = el('span', { class: 'val' });
+  const reset = el('button', { class: 'reset', hidden: '' }, 'Reset');
+  reset.addEventListener('click', () => set(op, c.name, c.default));
+  let value = c.value;
+  const showReset = () => { reset.hidden = c.default === undefined || value === c.default; };
+
+  if (isInt) {
+    const nudge = (d) => { value = Math.min(max, Math.max(min, value + d)); v.textContent = value; showReset(); set(op, c.name, value); };
+    const node = el('div', { class: 'ctl' },
+      el('div', { class: 'row' }, el('span', {}, c.label), reset),
+      el('div', { class: 'step' },
+        el('button', { onclick: () => nudge(-1), 'aria-label': c.label + ' down' }, '−'), v,
+        el('button', { onclick: () => nudge(1), 'aria-label': c.label + ' up' }, '+')));
+    return [node, (n) => { value = n.value; v.textContent = value; showReset(); }];
+  }
+
+  // Float: a slider, sending at most every 50 ms while it moves and once more when it's let go.
+  const range = el('input', { type: 'range', min, max, step: (max - min) / 1000 || 0.001, 'aria-label': c.label });
+  let dragging = false, last = 0, timer = null;
+  range.addEventListener('input', () => {
+    dragging = true; value = +range.value; v.textContent = fmt(value, c); showReset();
+    const now = Date.now(); clearTimeout(timer);
+    if (now - last > 50) { last = now; set(op, c.name, value); }
+    else timer = setTimeout(() => { last = Date.now(); set(op, c.name, value); }, 50);
+  });
+  range.addEventListener('change', () => { clearTimeout(timer); set(op, c.name, +range.value); dragging = false; });
+  const node = el('div', { class: 'ctl' },
+    el('div', { class: 'row' }, el('span', {}, c.label), el('span', {}, reset, ' ', v)), range);
+  return [node, (n) => { if (dragging) return; value = n.value; range.value = value; v.textContent = fmt(value, c); showReset(); }];
+}
+
+connect();
+</script>
+</body>
+</html>
