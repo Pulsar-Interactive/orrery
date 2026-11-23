@@ -40,9 +40,12 @@ The phone and the computer must be on the same network.
 | Header | a group title for the parameters after it |
 | Read-only parameter | shown, can't be changed |
 
-Sliders and steppers show **Reset** when the value is off its default. Any other parameter
-type is shown as its value, read only. The phone shows each parameter's **Label**, so give it a
-friendly one.
+Sliders move by how far you drag sideways, so scrolling past one or tapping it never changes
+it. After you move a slider or stepper away from its default, it shows **Reset**. Choosing from
+a menu or pressing Reset shows **Undo** for a few seconds. When the phone loses TouchDesigner,
+it says so and locks every control until it reconnects, so the screen never shows a change
+that didn't happen. Any other parameter type is shown as its value, read only. The phone shows
+each parameter's **Label**, and each COMP's name with `_` as spaces, so give them friendly ones.
 
 ## Settings
 
@@ -60,6 +63,7 @@ All on the component's **Orrery** page:
 | Controls In | `..` | the COMP whose children are listed |
 | Page Name | Controls | the parameter page the remote reads |
 | Refresh Address | | reads the address again after you change networks |
+| On Air | | optional: an expression that returns the name of the COMP on air, e.g. `op('show').par.Patch`; the phone marks it ON AIR |
 
 ## Safe to hand over
 
@@ -77,6 +81,7 @@ All on the component's **Orrery** page:
 - **Address changed?** Press **Refresh Address** (or **Show QR** again) after changing networks.
 - **No QR code?** The QR page needs the internet on the computer to draw it. The address and
   code are shown under it either way.
+- **Too much in the list?** Add the tag `orrery-hide` to a COMP (Common page › Tags) to keep it off the phone.
 - **Nothing in the list?** The remote only lists COMPs next to the component that have a page named
   exactly **Controls** (or whatever **Page Name** says).
 

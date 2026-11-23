@@ -30,7 +30,7 @@ def show_qr(comp):
 def onValueChange(par, prev):
 	if par.name in ('Port', 'Root', 'Page'):
 		refresh(par.owner)
-	if par.name in ('Root', 'Page'):
+	if par.name in ('Root', 'Page', 'Onair'):
 		m = op('callbacks').module
 		m.broadcast(m.listing())
 	return

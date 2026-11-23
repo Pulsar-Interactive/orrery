@@ -10,13 +10,14 @@
 # closed; nothing is sent to or accepted from it.
 #
 # Messages (JSON):
-#   -> {"type": "list"}                       <- {"type": "list", "project", "patches": [{"op", "label", "count"}]}
+#   -> {"type": "list"}                       <- {"type": "list", "project", "live", "patches": [{"op", "label", "count"}]}
 #   -> {"type": "get", "op": "synth"}         <- {"type": "state", "op", "controls": [...]}
 #   -> {"type": "set", "op", "par", "value"}  (Pulse parameters ignore value)
 #   <- {"type": "error", "error": "..."}
 # `parexec` pushes a fresh "state" to every paired phone when a control changes in TouchDesigner.
 import hmac
 import json
+import re
 import socket
 from urllib.parse import parse_qs, urlparse
 
@@ -36,11 +37,12 @@ def controls_page(o):
 	return next((p for p in o.customPages if p.name == name), None)
 
 def comps():
-	return [o for o in root().children if controls_page(o)]
+	# A COMP tagged orrery-hide keeps its Controls page (for other tools) but stays off the phone.
+	return [o for o in root().children if controls_page(o) and 'orrery-hide' not in o.tags]
 
 def find(name):
 	o = root().op(str(name))
-	if o is None or o.parent() != root() or not controls_page(o):
+	if o is None or o.parent() != root() or o not in comps():
 		raise ValueError('nothing to control called %s' % name)
 	return o
 
@@ -57,11 +59,21 @@ def describe(par):
 		d['min'], d['max'], d['default'] = par.normMin, par.normMax, par.default
 	return d
 
+def label(o):
+	# The COMP's name as words: my_patch -> my patch
+	return o.name.replace('_', ' ')
+
+def project_name():
+	# myshow.12.toe -> myshow (TouchDesigner's save number is not part of the name)
+	return re.sub(r'(\.\d+)?\.toe$', '', project.name)
+
 def listing():
+	items = sorted(comps(), key=lambda o: label(o).lower())
 	return {
 		'type': 'list',
-		'project': project.name.replace('.toe', ''),
-		'patches': [{'op': o.name, 'label': o.name.replace('_', ' '), 'count': len(controls_page(o).pars)} for o in comps()],
+		'project': project_name(),
+		'live': me_comp().par.Onair.eval() if hasattr(me_comp().par, 'Onair') else '',
+		'patches': [{'op': o.name, 'label': label(o), 'count': len(controls_page(o).pars)} for o in items],
 	}
 
 def state(o):

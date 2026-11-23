@@ -33,6 +33,7 @@ p = page.appendInt('Port', label='Port')[0]
 p.default, p.normMin, p.normMax, p.min, p.clampMin = 9980, 1024, 65535, 1024, True
 page.appendCOMP('Root', label='Controls In')[0].default = '..'
 page.appendStr('Page', label='Page Name')[0].default = 'Controls'
+page.appendStr('Onair', label='On Air')  # optional: an expression naming the COMP on air
 page.appendPulse('Refresh', label='Refresh Address')
 for p in page.pars:
 	if p.style not in ('Pulse',) and not p.readOnly:
@@ -73,7 +74,7 @@ pe.nodeX, pe.nodeY = 0, -150
 st = comp.create(parameterexecuteDAT, 'settings')
 st.text = text('orrery_settings.py')
 ops_par(st).val = '..'
-st.par.pars = 'Port Root Page Newcode Refresh Showqr'
+st.par.pars = 'Port Root Page Onair Newcode Refresh Showqr'
 st.par.valuechange = True
 st.par.onpulse = True
 st.nodeX, st.nodeY = 200, -150
