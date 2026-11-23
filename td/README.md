@@ -18,7 +18,7 @@ The phone opens `http://ADDRESS:PORT/` (or `/?code=CODE` from the QR, which the 
 from the address bar) and connects to `ws://ADDRESS:PORT/?code=CODE`. A wrong code gets `{"type": "denied"}` and is closed.
 
 ```
--> {"type": "list"}                       <- {"type": "list", "project", "patches": [{"op", "label", "count"}]}
+-> {"type": "list"}                       <- {"type": "list", "project", "live", "patches": [{"op", "label", "count"}]}
 -> {"type": "get", "op": "synth"}         <- {"type": "state", "op", "controls": [...]}
 -> {"type": "set", "op", "par", "value"}  (Pulse parameters ignore value)
 <- {"type": "error", "error": "..."}
