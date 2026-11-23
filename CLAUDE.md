@@ -1,9 +1,7 @@
 ## Orrery
 
 Product: Orrery, a phone remote for TouchDesigner: a drop-in .tox that serves its own web remote.
-Repo `orrery` (public, so no `moon-` prefix; history rewritten 2026-11-22 without the Expo app). Seeded on 2026-11-21 from
-`r&d/moon-touchdesigner`, which stays Pulsar's own show remote (autopilot, REC, on air) until
-Orrery can replace it.
+Repo `orrery` (public; history rewritten 2026-11-22 without the Expo app).
 
 - Web first (decided 2026-11-22): the component serves the remote itself, `td/remote.html`
   (one file, vanilla JS, no build), at `http://ADDRESS:PORT/`. Show QR opens `td/pair.html` on
