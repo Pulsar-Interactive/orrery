@@ -3,20 +3,20 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { load, STATE, clone } from './harness.js';
 
-test('opening the socket shows LIVE and asks for the list', () => {
+test('opening the socket shows CONNECTED and asks for the list', () => {
   const r = load({ stored: '123456' });
   assert.equal(r.text('#status'), 'CONNECTING');
   r.ws().accept();
-  assert.equal(r.text('#status'), 'LIVE');
+  assert.equal(r.text('#status'), 'CONNECTED');
   assert.equal(r.$('#status').className, 'dot live');
   assert.deepEqual(r.ws().take(), [{ type: 'list' }]);
 });
 
-test('a dropped socket shows RECONNECTING and retries after two seconds', () => {
+test('a dropped socket shows OFFLINE and retries after two seconds', () => {
   const r = load({ stored: '123456' });
   r.live().drop();
-  assert.equal(r.text('#status'), 'RECONNECTING');
-  assert.equal(r.$('#status').className, 'dot');
+  assert.equal(r.text('#status'), 'OFFLINE');
+  assert.equal(r.$('#status').className, 'dot off');
   r.advance(1999);
   assert.equal(r.sockets.length, 1);
   r.advance(1);
@@ -45,8 +45,8 @@ test('reconnecting on a panel asks for that panel again', () => {
 test('the panel stays on screen while reconnecting', () => {
   const r = load({ stored: '123456' });
   r.openPanel().drop();
-  assert.equal(r.text('h1'), 'synth');
-  assert.ok(r.$('input[type=range]'));
+  assert.equal(r.title(), 'synth');
+  assert.ok(r.$('[role=slider]'));
 });
 
 test('a list arriving after reconnecting does not leave the panel', () => {
@@ -54,7 +54,7 @@ test('a list arriving after reconnecting does not leave the panel', () => {
   r.openPanel().drop();
   r.advance(2000);
   r.live();
-  assert.equal(r.text('h1'), 'synth');
+  assert.equal(r.title(), 'synth');
 });
 
 test('coming back to the page reconnects at once if the socket died', () => {
@@ -95,11 +95,34 @@ test('an early reconnect cancels the pending retry', () => {
   assert.equal(r.sockets.length, 2, 'the old 2 s timer was cleared');
 });
 
-test('taps while disconnected are dropped, not thrown', () => {
+test('taps while disconnected are dropped, not thrown, and the switch does not flip', () => {
   const r = load({ stored: '123456' });
   const s = r.openPanel();
   s.drop();
-  assert.doesNotThrow(() => r.$('.switch').click());
+  const sw = r.$('[role=switch]');
+  assert.doesNotThrow(() => sw.click());
+  assert.deepEqual(s.sent, []);
+  assert.equal(sw.getAttribute('aria-checked'), 'false');
+});
+
+test('offline, a banner says so and the controls are locked until it reconnects', () => {
+  const r = load({ stored: '123456' });
+  r.openPanel().drop();
+  assert.equal(r.$('#banner').hidden, false);
+  assert.match(r.text('#banner'), /Not connected to TouchDesigner/);
+  assert.ok(r.doc.body.classList.contains('offline'));
+  r.advance(2000);
+  r.ws().accept();
+  assert.equal(r.$('#banner').hidden, true);
+  assert.ok(!r.doc.body.classList.contains('offline'));
+});
+
+test('offline, the stepper does not change', () => {
+  const r = load({ stored: '123456' });
+  const s = r.openPanel();
+  s.drop();
+  r.button('Voices up').click();
+  assert.equal(r.$('.step .val').textContent, '4');
   assert.deepEqual(s.sent, []);
 });
 
@@ -132,6 +155,6 @@ test('state that arrives before anything is opened is ignored', () => {
   const r = load({ stored: '123456' });
   const s = r.live();
   s.receive(clone(STATE));
-  assert.equal(r.$('input[type=range]'), null);
-  assert.equal(r.text('h1'), 'show');
+  assert.equal(r.$('[role=slider]'), null);
+  assert.equal(r.title(), 'show');
 });

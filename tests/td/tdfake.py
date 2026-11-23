@@ -155,6 +155,9 @@ class OP:
 			return default
 		return self.storage[key]
 
+	def store(self, key, value):
+		self.storage[key] = value
+
 	def destroy(self):
 		if self._parent is not None:
 			self._parent.children.remove(self)
@@ -171,6 +174,7 @@ class COMP(OP):
 		super().__init__(name, parent)
 		self.par = ParCollection()
 		self.customPages = []
+		self.tags = set()
 
 	def page(self, name):
 		pg = next((p for p in self.customPages if p.name == name), None)
@@ -245,6 +249,7 @@ class World:
 		page.add('Port', 'Int', value=9980, default=9980)
 		page.add('Root', 'COMP', value=None)
 		page.add('Page', 'Str', value='Controls', default='Controls')
+		page.add('Onair', 'Str', value='', default='')
 		page.add('Refresh', 'Pulse')
 		o.par.Code = '123456'
 

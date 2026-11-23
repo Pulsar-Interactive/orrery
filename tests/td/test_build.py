@@ -88,6 +88,7 @@ def test_parameters_in_order(built):
 		('Port', 'Int', 'Port'),
 		('Root', 'COMP', 'Controls In'),
 		('Page', 'Str', 'Page Name'),
+		('Onair', 'Str', 'On Air'),
 		('Refresh', 'Pulse', 'Refresh Address'),
 	]
 
@@ -144,7 +145,7 @@ def test_settings_watches_the_component(built):
 	watched = st.par.pars.eval().split()
 	_, pars = page_pars(built)
 	assert set(watched) <= set(pars)
-	assert set(watched) == {'Port', 'Root', 'Page', 'Newcode', 'Refresh', 'Showqr'}
+	assert set(watched) == {'Port', 'Root', 'Page', 'Onair', 'Newcode', 'Refresh', 'Showqr'}
 
 
 def test_every_pulse_is_handled_by_settings(built):

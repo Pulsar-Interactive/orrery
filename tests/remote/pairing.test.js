@@ -6,7 +6,7 @@ import { load } from './harness.js';
 test('without a code it asks for one and opens no socket', () => {
   const r = load();
   assert.equal(r.sockets.length, 0);
-  assert.equal(r.text('h1'), 'Pair this phone');
+  assert.equal(r.title(), 'Pair this phone');
   assert.ok(r.$('#code'));
   assert.equal(r.$('#status').hidden, true);
   assert.match(r.text('.hint'), /Pairing Code shown on the Orrery component/);
@@ -80,7 +80,7 @@ test('a QR code replaces a saved one', () => {
 test('a saved code connects straight away', () => {
   const r = load({ stored: '987654' });
   assert.equal(r.ws().url, 'ws://192.168.1.20:9980/?code=987654');
-  assert.notEqual(r.text('h1'), 'Pair this phone');
+  assert.notEqual(r.title(), 'Pair this phone');
 });
 
 test('the code is URL-encoded in the socket address', () => {
@@ -99,7 +99,7 @@ test('a refused code is forgotten and the phone asks again, without reconnecting
   s.accept().receive({ type: 'denied' });
   assert.equal(s.closed, true);
   assert.equal(r.window.localStorage.getItem('orrery-code'), null);
-  assert.equal(r.text('h1'), 'Pair this phone');
+  assert.equal(r.title(), 'Pair this phone');
   assert.match(r.text('.hint.error'), /not accepted/);
   r.advance(10_000);
   assert.equal(r.sockets.length, 1, 'no retry loop with a bad code');
@@ -115,14 +115,14 @@ test('after a refusal a new code pairs', () => {
   assert.equal(r.sockets.length, 2);
   assert.match(r.ws().url, /code=123456$/);
   r.ws().accept();
-  assert.equal(r.text('#status'), 'LIVE');
+  assert.equal(r.text('#status'), 'CONNECTED');
 });
 
 test('denied while on a panel goes back to pairing', () => {
   const r = load({ stored: '123456' });
   const s = r.openPanel();
   s.receive({ type: 'denied' });
-  assert.equal(r.text('h1'), 'Pair this phone');
+  assert.equal(r.title(), 'Pair this phone');
   assert.equal(r.$('.back'), null);
 });
 

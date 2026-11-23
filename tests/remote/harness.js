@@ -13,6 +13,9 @@ export const LIST = { type: 'list', project: 'show', patches: [
   { op: 'my_fx', label: 'my fx', count: 1 },
 ] };
 
+// The slider's track is its width minus the 28 px thumb, so a 300 px drag crosses the whole range.
+export const SLIDER_WIDTH = 328;
+
 export function clone(x) { return JSON.parse(JSON.stringify(x)); }
 
 export function load({ url = 'http://192.168.1.20:9980/', stored = null } = {}) {
@@ -25,6 +28,11 @@ export function load({ url = 'http://192.168.1.20:9980/', stored = null } = {}) 
     pretendToBeVisual: true,
     beforeParse(window) {
       if (stored !== null) window.localStorage.setItem('orrery-code', stored);
+
+      // jsdom has no layout: every element is SLIDER_WIDTH wide, scrolling and pointer capture do nothing.
+      Object.defineProperty(window.HTMLElement.prototype, 'clientWidth', { get: () => SLIDER_WIDTH, configurable: true });
+      window.HTMLElement.prototype.setPointerCapture = () => {};
+      window.scrollTo = () => {};
 
       window.Date.now = () => clock.now;
       window.setTimeout = (fn, ms = 0) => {
@@ -57,6 +65,8 @@ export function load({ url = 'http://192.168.1.20:9980/', stored = null } = {}) 
   const $ = (sel) => doc.querySelector(sel);
   const $$ = (sel) => [...doc.querySelectorAll(sel)];
   const text = (sel) => $(sel)?.textContent;
+  // The heading without its ON AIR badge.
+  const title = () => $('h1')?.firstChild?.textContent;
 
   function advance(ms) {
     const until = clock.now + ms;
@@ -104,10 +114,23 @@ export function load({ url = 'http://192.168.1.20:9980/', stored = null } = {}) 
     return e;
   }
 
+  function pointer(node, type, x = 0, y = 0) {
+    const e = new window.MouseEvent(type, { bubbles: true, cancelable: true, clientX: x, clientY: y });
+    node.dispatchEvent(e);
+    return e;
+  }
+
+  // A finger on a slider: press at x = 0, move to each dx (px), then .to() more or .up() to let go.
+  function drag(slider, ...dxs) {
+    pointer(slider, 'pointerdown');
+    for (const dx of dxs) pointer(slider, 'pointermove', dx);
+    return { to: (dx, dy = 0) => pointer(slider, 'pointermove', dx, dy), up: () => pointer(slider, 'pointerup') };
+  }
+
   function type(input, value) {
     input.value = value;
     fire(input, 'input');
   }
 
-  return { dom, window, doc, $, $$, text, sockets, ws, clock, advance, live, openPanel, button, rowOf, fire, type };
+  return { dom, window, doc, $, $$, text, title, pointer, drag, sockets, ws, clock, advance, live, openPanel, button, rowOf, fire, type };
 }

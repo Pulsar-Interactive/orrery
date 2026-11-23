@@ -157,19 +157,48 @@ def test_state_is_json_serialisable(world, synth):
 
 def test_listing(world, synth):
 	world.comp('my_fx').page('Controls').add('Mix', 'Float', value=0)
-	assert world.cb.listing() == {'type': 'list', 'project': 'show', 'patches': [
-		{'op': 'synth', 'label': 'synth', 'count': 10},
+	assert world.cb.listing() == {'type': 'list', 'project': 'show', 'live': '', 'patches': [
 		{'op': 'my_fx', 'label': 'my fx', 'count': 1},
+		{'op': 'synth', 'label': 'synth', 'count': 10},
 	]}
+
+
+def test_listing_is_sorted_by_label_ignoring_case(world):
+	for name in ('Zeta', 'alpha', 'Mid_way'):
+		world.comp(name)
+	assert [p['op'] for p in world.cb.listing()['patches']] == ['alpha', 'Mid_way', 'Zeta']
+
+
+def test_listing_live_is_the_on_air_value(world, synth):
+	world.orrery.par.Onair = 'synth'
+	assert world.cb.listing()['live'] == 'synth'
+
+
+def test_hidden_comp_is_left_out_of_the_list(world, synth):
+	world.comp('secret').tags.add('orrery-hide')
+	assert [p['op'] for p in world.cb.listing()['patches']] == ['synth']
+
+
+def test_hidden_comp_cannot_be_read_or_changed(world):
+	c = world.comp('secret')
+	c.page('Controls').add('Mix', 'Float', value=0.5)
+	c.tags.add('orrery-hide')
+	phone = world.pair()
+	nope = [{'type': 'error', 'error': 'nothing to control called secret'}]
+	assert world.ask(phone, {'type': 'get', 'op': 'secret'}) == nope
+	assert world.ask(phone, {'type': 'set', 'op': 'secret', 'par': 'Mix', 'value': 1}) == nope
+	assert c.par.Mix.eval() == 0.5
 
 
 def test_listing_when_nothing_to_control(world):
 	assert world.cb.listing()['patches'] == []
 
 
-def test_listing_project_name_drops_toe():
+@pytest.mark.parametrize('toe, name', [('show.toe', 'show'), ('festival.42.toe', 'festival'),
+		('my.show.toe', 'my.show'), ('v2.1.toe', 'v2')])
+def test_listing_project_name_drops_toe_and_save_number(toe, name):
 	from tdfake import World
-	assert World('festival.42.toe').cb.listing()['project'] == 'festival.42'
+	assert World(toe).cb.listing()['project'] == name
 
 
 # --- pairing -------------------------------------------------------------------------------

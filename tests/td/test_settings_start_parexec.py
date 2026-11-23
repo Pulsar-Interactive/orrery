@@ -88,7 +88,7 @@ def test_port_root_page_refresh(world, name):
 	assert world.orrery.par.Address.eval() == 'http://192.168.1.20:9990'
 
 
-@pytest.mark.parametrize('name', ['Root', 'Page'])
+@pytest.mark.parametrize('name', ['Root', 'Page', 'Onair'])
 def test_root_and_page_rebroadcast_the_list(world, synth, name):
 	world.pair('a')
 	world.pair('b')
@@ -285,3 +285,19 @@ def test_many_comps_push_only_their_own_state(world):
 	two = add_synth(world, 'two')
 	world.parexec.onValueChange(two.par.Gain, 0)
 	assert [m['op'] for _, m in world.server.sent] == ['two']
+
+
+def test_control_change_that_moves_on_air_also_pushes_the_list(world, synth):
+	world.pair('a')
+	world.orrery.par.Onair = 'synth'
+	world.parexec.onValueChange(synth.par.Cutoff, 0.25)
+	assert [m['type'] for m in world.server.to('a')] == ['state', 'list']
+	assert world.server.to('a')[1]['live'] == 'synth'
+
+
+def test_list_is_pushed_only_when_on_air_changes(world, synth):
+	world.pair('a')
+	world.orrery.par.Onair = 'synth'
+	world.parexec.onValueChange(synth.par.Cutoff, 0.25)
+	world.parexec.onValueChange(synth.par.Cutoff, 0.5)
+	assert [m['type'] for m in world.server.to('a')] == ['state', 'list', 'state']

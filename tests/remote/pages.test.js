@@ -11,7 +11,7 @@ function fillPair(url, address, code) {
 
 test('the remote is one self-contained page', () => {
   assert.doesNotMatch(REMOTE, /<script[^>]+src=/);
-  assert.doesNotMatch(REMOTE, /<link[^>]+href=/);
+  assert.doesNotMatch(REMOTE, /<link[^>]+href="(?!data:)/); // data: URIs (the icon) are inline
   assert.doesNotMatch(REMOTE, /@import|url\(http/);
 });
 

@@ -62,8 +62,8 @@ All on the component's **Orrery** page:
 | Port | 9980 | change it if 9980 is taken |
 | Controls In | `..` | the COMP whose children are listed |
 | Page Name | Controls | the parameter page the remote reads |
-| Refresh Address | | reads the address again after you change networks |
 | On Air | | optional: an expression that returns the name of the COMP on air, e.g. `op('show').par.Patch`; the phone marks it ON AIR |
+| Refresh Address | | reads the address again after you change networks |
 
 ## Safe to hand over
 
