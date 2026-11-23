@@ -1,0 +1,100 @@
+{
+  "type": "state",
+  "op": "synth",
+  "controls": [
+    {
+      "name": "Tone",
+      "label": "Tone",
+      "style": "Header",
+      "section": true
+    },
+    {
+      "name": "Cutoff",
+      "label": "Cutoff",
+      "style": "Float",
+      "section": false,
+      "value": 0.25,
+      "min": 0.0,
+      "max": 1.0,
+      "default": 0.5
+    },
+    {
+      "name": "Gain",
+      "label": "Gain",
+      "style": "Float",
+      "section": false,
+      "value": 12.0,
+      "min": -24.0,
+      "max": 24.0,
+      "default": 0.0
+    },
+    {
+      "name": "Voices",
+      "label": "Voices",
+      "style": "Int",
+      "section": false,
+      "value": 4,
+      "min": 1,
+      "max": 8,
+      "default": 4
+    },
+    {
+      "name": "Bypass",
+      "label": "Bypass",
+      "style": "Toggle",
+      "section": false,
+      "value": false
+    },
+    {
+      "name": "Wave",
+      "label": "Wave",
+      "style": "Menu",
+      "section": false,
+      "value": "saw",
+      "options": [
+        [
+          "sine",
+          "Sine"
+        ],
+        [
+          "saw",
+          "Saw"
+        ],
+        [
+          "square",
+          "Square"
+        ]
+      ]
+    },
+    {
+      "name": "Trigger",
+      "label": "Trigger",
+      "style": "Pulse",
+      "section": false
+    },
+    {
+      "name": "Hold",
+      "label": "Hold",
+      "style": "Momentary",
+      "section": false
+    },
+    {
+      "name": "Name",
+      "label": "Name",
+      "style": "Str",
+      "section": false,
+      "value": "lead"
+    },
+    {
+      "name": "Level",
+      "label": "Level",
+      "style": "Float",
+      "section": false,
+      "readOnly": true,
+      "value": 0.8,
+      "min": 0.0,
+      "max": 1.0,
+      "default": null
+    }
+  ]
+}

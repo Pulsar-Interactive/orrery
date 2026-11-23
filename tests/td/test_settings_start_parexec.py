@@ -1,0 +1,303 @@
+# orrery_settings.py, orrery_start.py and orrery_parexec.py.
+import re
+
+import pytest
+from conftest import add_synth
+from tdfake import COMP
+
+
+@pytest.fixture(autouse=True)
+def lan(world, monkeypatch):
+	monkeypatch.setattr(world.cb, 'address', lambda: 'http://192.168.1.20:%d' % int(world.orrery.par.Port))
+
+
+@pytest.fixture
+def browser(monkeypatch, tmp_path):
+	opened = []
+	import tempfile
+	import webbrowser
+	monkeypatch.setattr(webbrowser, 'open', lambda url: opened.append(url))
+	monkeypatch.setattr(tempfile, 'gettempdir', lambda: str(tmp_path))
+	return opened
+
+
+# --- pairing codes -------------------------------------------------------------------------
+
+def test_new_code_is_six_digits(world):
+	for _ in range(200):
+		world.settings.new_code(world.orrery)
+		assert re.fullmatch(r'\d{6}', world.orrery.par.Code.eval())
+
+
+def test_new_code_keeps_leading_zeros(world, monkeypatch):
+	class R:
+		def randrange(self, n):
+			assert n == 1000000
+			return 42
+	monkeypatch.setattr(world.settings.random, 'SystemRandom', R)
+	world.settings.new_code(world.orrery)
+	assert world.orrery.par.Code.eval() == '000042'
+
+
+def test_new_code_uses_system_random(world, monkeypatch):
+	used = []
+	real = world.settings.random.SystemRandom
+	monkeypatch.setattr(world.settings.random, 'SystemRandom', lambda: used.append(1) or real())
+	world.settings.new_code(world.orrery)
+	assert used
+
+
+def test_new_codes_vary(world):
+	codes = set()
+	for _ in range(50):
+		world.settings.new_code(world.orrery)
+		codes.add(world.orrery.par.Code.eval())
+	assert len(codes) > 40
+
+
+# --- refresh -------------------------------------------------------------------------------
+
+def test_refresh_sets_address_and_watches_root(world):
+	world.settings.refresh(world.orrery)
+	assert world.orrery.par.Address.eval() == 'http://192.168.1.20:9980'
+	assert world.parexec_dat.par.ops.eval() == '/project1/*'
+
+
+def test_refresh_follows_root(world):
+	rack = COMP('rack', world.project)
+	world.orrery.par.Root = rack
+	world.settings.refresh(world.orrery)
+	assert world.parexec_dat.par.ops.eval() == '/project1/rack/*'
+
+
+def test_refresh_uses_op_when_there_is_no_ops_parameter(world):
+	# Older TouchDesigner builds call the Parameter Execute DAT's OPs parameter `op`.
+	from tdfake import Par, ParCollection
+	world.parexec_dat.par = ParCollection()
+	world.parexec_dat.par.add(Par('op', 'Str', value=''))
+	world.settings.refresh(world.orrery)
+	assert world.parexec_dat.par.op.eval() == '/project1/*'
+
+
+# --- parameter changes on the component ----------------------------------------------------
+
+@pytest.mark.parametrize('name', ['Port', 'Root', 'Page'])
+def test_port_root_page_refresh(world, name):
+	world.orrery.par.Port = 9990
+	world.settings.onValueChange(getattr(world.orrery.par, name), None)
+	assert world.orrery.par.Address.eval() == 'http://192.168.1.20:9990'
+
+
+@pytest.mark.parametrize('name', ['Root', 'Page', 'Onair'])
+def test_root_and_page_rebroadcast_the_list(world, synth, name):
+	world.pair('a')
+	world.pair('b')
+	world.settings.onValueChange(getattr(world.orrery.par, name), None)
+	assert sorted((c, m['type']) for c, m in world.server.sent) == [('a', 'list'), ('b', 'list')]
+
+
+def test_port_change_does_not_broadcast(world):
+	world.pair('a')
+	world.settings.onValueChange(world.orrery.par.Port, 9980)
+	assert world.server.sent == []
+
+
+@pytest.mark.parametrize('name', ['Active', 'Code', 'Phones', 'Address'])
+def test_other_parameters_do_nothing(world, name):
+	world.pair('a')
+	world.settings.onValueChange(getattr(world.orrery.par, name), None)
+	assert world.server.sent == [] and world.orrery.par.Address.eval() == ''
+
+
+# --- pulses --------------------------------------------------------------------------------
+
+def test_new_code_pulse_changes_code_and_restarts_server(world):
+	world.settings.onPulse(world.orrery.par.Newcode)
+	assert re.fullmatch(r'\d{6}', world.orrery.par.Code.eval())
+	assert world.server.par.active.history == [False, True]
+
+
+def test_new_code_pulse_drops_old_phones(world, monkeypatch):
+	# Restarting the server fires onServerStop/onServerStart, which forget every phone.
+	class R:
+		def randrange(self, n):
+			return 777777
+	monkeypatch.setattr(world.settings.random, 'SystemRandom', R)
+	world.pair('a')
+	world.settings.onPulse(world.orrery.par.Newcode)
+	world.cb.onServerStop(world.server)
+	world.cb.onServerStart(world.server)
+	assert world.cb.paired() == set()
+	world.cb.onWebSocketOpen(world.server, 'a', '/?code=123456')
+	assert 'a' not in world.cb.paired()
+	world.cb.onWebSocketOpen(world.server, 'a', '/?code=777777')
+	assert 'a' in world.cb.paired()
+
+
+def test_refresh_pulse(world):
+	world.settings.onPulse(world.orrery.par.Refresh)
+	assert world.orrery.par.Address.eval() == 'http://192.168.1.20:9980'
+
+
+def test_unknown_pulse_does_nothing(world):
+	world.settings.onPulse(world.orrery.par.Active)
+	assert world.orrery.par.Code.eval() == '123456'
+	assert world.server.par.active.history == []
+
+
+# --- Show QR -------------------------------------------------------------------------------
+
+def test_show_qr_writes_a_local_page_and_opens_it(world, browser, tmp_path):
+	world.settings.onPulse(world.orrery.par.Showqr)
+	path = tmp_path / 'orrery-pair.html'
+	assert browser == ['file://' + str(path)]
+	html = path.read_text(encoding='utf-8')
+	assert "text: 'http://192.168.1.20:9980/?code=123456'" in html
+	assert '<div class="addr">http://192.168.1.20:9980</div>' in html
+	assert '<div class="code">123456</div>' in html
+	assert '{{' not in html
+
+
+def test_show_qr_refreshes_first(world, browser, tmp_path):
+	world.orrery.par.Port = 10000
+	world.settings.show_qr(world.orrery)
+	assert world.orrery.par.Address.eval() == 'http://192.168.1.20:10000'
+	assert 'http://192.168.1.20:10000/?code=123456' in (tmp_path / 'orrery-pair.html').read_text()
+
+
+def test_show_qr_does_not_touch_the_template(world, browser):
+	before = world.pairpage.text
+	world.settings.show_qr(world.orrery)
+	assert world.pairpage.text == before
+
+
+def test_show_qr_overwrites_the_previous_page(world, browser, tmp_path):
+	world.settings.show_qr(world.orrery)
+	world.orrery.par.Code = '654321'
+	world.settings.show_qr(world.orrery)
+	html = (tmp_path / 'orrery-pair.html').read_text()
+	assert '654321' in html and '123456' not in html
+
+
+def test_show_qr_sends_nothing_to_phones(world, browser):
+	world.pair('a')
+	world.settings.show_qr(world.orrery)
+	assert world.server.sent == []
+
+
+# --- start ---------------------------------------------------------------------------------
+
+def test_start_makes_a_code_when_there_is_none(world):
+	world.orrery.par.Code = ''
+	world.start.onStart()
+	assert re.fullmatch(r'\d{6}', world.orrery.par.Code.eval())
+	assert world.orrery.par.Address.eval() == 'http://192.168.1.20:9980'
+
+
+def test_start_keeps_an_existing_code(world):
+	world.start.onStart()
+	assert world.orrery.par.Code.eval() == '123456'
+
+
+def test_create_runs_start(world):
+	world.orrery.par.Code = ''
+	world.start.onCreate()
+	assert world.orrery.par.Code.eval() != ''
+	assert world.parexec_dat.par.ops.eval() == '/project1/*'
+
+
+# --- parexec: pushing TouchDesigner changes to the phones ----------------------------------
+
+def test_control_change_is_pushed_to_every_phone(world, synth):
+	world.pair('a')
+	world.pair('b')
+	synth.par.Cutoff = 0.7
+	world.parexec.onValueChange(synth.par.Cutoff, 0.25)
+	assert sorted(c for c, _ in world.server.sent) == ['a', 'b']
+	state = world.server.sent[0][1]
+	assert state['type'] == 'state' and state['op'] == 'synth'
+	assert next(c for c in state['controls'] if c['name'] == 'Cutoff')['value'] == 0.7
+
+
+def test_phone_set_round_trips_through_parexec(world, synth):
+	# The phone's set sends nothing itself; TouchDesigner then fires parexec, which pushes state.
+	a, b = world.pair('a'), world.pair('b')
+	assert world.ask(a, {'type': 'set', 'op': 'synth', 'par': 'Voices', 'value': 6}) == []
+	world.parexec.onValueChange(synth.par.Voices, 4)
+	for c in (a, b):
+		[msg] = world.server.to(c)
+		assert next(x for x in msg['controls'] if x['name'] == 'Voices')['value'] == 6
+
+
+def test_change_on_another_page_is_not_pushed(world, synth):
+	world.pair('a')
+	p = synth.page('Private').add('Secret', 'Float', value=0)
+	world.parexec.onValueChange(p, 1)
+	assert world.server.sent == []
+
+
+def test_change_on_comp_without_controls_page_is_not_pushed(world):
+	world.pair('a')
+	c = world.comp('plain', page=None)
+	p = c.page('Other').add('X', 'Float')
+	world.parexec.onValueChange(p, 0)
+	assert world.server.sent == []
+
+
+def test_change_on_a_builtin_parameter_is_not_pushed(world, synth):
+	# Built-in parameters have no custom page.
+	world.pair('a')
+	from tdfake import Par
+	world.parexec.onValueChange(Par('tx', owner=synth, page=None), 0)
+	assert world.server.sent == []
+
+
+def test_change_on_the_orrery_component_is_not_pushed(world):
+	world.pair('a')
+	p = world.orrery.page('Controls').add('X', 'Float')
+	world.parexec.onValueChange(p, 0)
+	assert world.server.sent == []
+
+
+def test_change_follows_the_page_parameter(world):
+	world.pair('a')
+	c = world.comp('rig', page='Setup')
+	p = c.page('Setup').add('X', 'Float', value=1)
+	world.orrery.par.Page = 'Setup'
+	world.parexec.onValueChange(p, 0)
+	assert [m['op'] for _, m in world.server.sent] == ['rig']
+
+
+def test_change_with_no_phones_sends_nothing(world, synth):
+	world.parexec.onValueChange(synth.par.Cutoff, 0)
+	assert world.server.sent == []
+
+
+def test_parexec_pulse_is_ignored(world, synth):
+	world.pair('a')
+	world.parexec.onPulse(synth.par.Trigger)
+	assert world.server.sent == []
+
+
+def test_many_comps_push_only_their_own_state(world):
+	world.pair('a')
+	add_synth(world, 'one')
+	two = add_synth(world, 'two')
+	world.parexec.onValueChange(two.par.Gain, 0)
+	assert [m['op'] for _, m in world.server.sent] == ['two']
+
+
+def test_control_change_that_moves_on_air_also_pushes_the_list(world, synth):
+	world.pair('a')
+	world.orrery.par.Onair = 'synth'
+	world.parexec.onValueChange(synth.par.Cutoff, 0.25)
+	assert [m['type'] for m in world.server.to('a')] == ['state', 'list']
+	assert world.server.to('a')[1]['live'] == 'synth'
+
+
+def test_list_is_pushed_only_when_on_air_changes(world, synth):
+	world.pair('a')
+	world.orrery.par.Onair = 'synth'
+	world.parexec.onValueChange(synth.par.Cutoff, 0.25)
+	world.parexec.onValueChange(synth.par.Cutoff, 0.5)
+	assert [m['type'] for m in world.server.to('a')] == ['state', 'list', 'state']
