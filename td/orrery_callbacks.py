@@ -64,7 +64,7 @@ def label(o):
 	return o.name.replace('_', ' ')
 
 def project_name():
-	# circle.155.toe -> circle (TouchDesigner's save number is not part of the name)
+	# myshow.12.toe -> myshow (TouchDesigner's save number is not part of the name)
 	return re.sub(r'(\.\d+)?\.toe$', '', project.name)
 
 def listing():
