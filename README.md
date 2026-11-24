@@ -6,8 +6,9 @@ Orrery is a free phone remote for TouchDesigner. You don't draw a layout or map 
 The parameters you already built become sliders, switches and buttons. Hand the phone to a
 client, a VJ or the venue tech, and they can only touch what you chose to show.
 
-There is no app to install. The component serves the remote itself: the phone scans a QR code
-and opens it in its browser.
+There is no app to install, and any device with a browser can connect: a phone, a tablet or a
+laptop. The component serves the remote itself and draws its own QR code, so pairing needs no
+internet: scan the code with the camera and the remote opens in the browser.
 
 > **Status: early (v0.1).** Feedback and issues are welcome.
 
@@ -18,14 +19,21 @@ and opens it in its browser.
 2. **Pick your controls.** On any of those COMPs, add a custom parameter page named
    **Controls** (right-click the COMP › Customize Component…). Put the parameters you want on
    the phone on that page.
-3. **Pair the phone.** Press **Show QR** on the component's **Orrery** page and scan the code
-   with the phone's camera. Or open the **Address** in the phone's browser and type the 6-digit
-   **Pairing Code**.
+3. **Pair the phone.** Press **Show QR** on the component's **Orrery** page: a window opens
+   with the QR code. Scan it with the phone's camera. Or open the **Address** in any browser
+   and type the 6-digit **Pairing Code**.
 
 That's it. The phone remembers the code, and changes made in TouchDesigner show up on the phone
-right away. Add the page to the home screen to open it like an app.
+right away. Add the page to the home screen to open it like an app: in Safari, Share → **Add to
+Home Screen** (it opens full screen, with the Orrery icon); in Chrome, ⋮ → **Add to Home screen**.
+The app opens the Address it was added from, so if the computer's address changes, add it again
+(or give the computer a fixed address on the router). An app added this way keeps its own
+memory, so it asks for the Pairing Code once.
 
 The phone and the computer must be on the same network.
+
+Prefer a guide? Paste [SETUP.md](SETUP.md) into Claude or ChatGPT: it asks what you want on the
+phone and writes the Textport script that builds the Controls page.
 
 ## What becomes what
 
@@ -54,7 +62,7 @@ All on the component's **Orrery** page:
 | Parameter | Default | What it does |
 |---|---|---|
 | Active | on | runs the server |
-| Show QR | | opens a QR code on this computer for the phone to scan |
+| Show QR | | opens a window with the pairing QR code, drawn by the component (no internet needed) |
 | Address | | the page to open on the phone (read only) |
 | Pairing Code | | the code the phone needs (read only) |
 | New Pairing Code | | makes a new code and disconnects every phone |
@@ -63,7 +71,8 @@ All on the component's **Orrery** page:
 | Controls In | `..` | the COMP whose children are listed |
 | Page Name | Controls | the parameter page the remote reads |
 | Refresh Address | | reads the address again after you change networks |
-| On Air | | optional: an expression that returns the name of the COMP on air, e.g. `op('show').par.Patch`; the phone marks it ON AIR |
+| On Air | | optional: an expression that returns the name of the COMP on air, e.g. `op('show').par.Patch`; the phone marks it ON AIR. When it names a parameter like that, each patch's screen gets a GO LIVE button that sets it |
+| Record | | optional: an expression naming a recording Toggle, e.g. `op('recorder').par.Record`; every patch's screen gets a REC button next to GO LIVE, pinned to the top |
 
 ## Safe to hand over
 
@@ -79,8 +88,6 @@ All on the component's **Orrery** page:
   networks often block devices from reaching each other. A phone hotspot works.
 - **Firewall?** On macOS, allow TouchDesigner to accept incoming connections.
 - **Address changed?** Press **Refresh Address** (or **Show QR** again) after changing networks.
-- **No QR code?** The QR page needs the internet on the computer to draw it. The address and
-  code are shown under it either way.
 - **Too much in the list?** Add the tag `orrery-hide` to a COMP (Common page › Tags) to keep it off the phone.
 - **Nothing in the list?** The remote only lists COMPs next to the component that have a page named
   exactly **Controls** (or whatever **Page Name** says).

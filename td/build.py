@@ -34,6 +34,7 @@ p.default, p.normMin, p.normMax, p.min, p.clampMin = 9980, 1024, 65535, 1024, Tr
 page.appendCOMP('Root', label='Controls In')[0].default = '..'
 page.appendStr('Page', label='Page Name')[0].default = 'Controls'
 page.appendStr('Onair', label='On Air')  # optional: an expression naming the COMP on air
+page.appendStr('Record', label='Record')  # optional: an expression naming a recording Toggle
 page.appendPulse('Refresh', label='Refresh Address')
 for p in page.pars:
 	if p.style not in ('Pulse',) and not p.readOnly:
@@ -53,10 +54,28 @@ rp = comp.create(textDAT, 'remote')
 rp.text = text('remote.html')
 rp.nodeX, rp.nodeY = 0, 150
 
-# the QR page Show QR opens on this computer
-pp = comp.create(textDAT, 'pairpage')
-pp.text = text('pair.html')
-pp.nodeX, pp.nodeY = 200, 150
+# what the remote page loads besides itself (app manifest, icons, Pulsar logo): td/web, as base64
+import base64
+assets = comp.create(tableDAT, 'assets')
+assets.clear()
+for name in sorted(os.listdir(os.path.join(src, 'web'))):
+	if not name.startswith('.'):
+		with open(os.path.join(src, 'web', name), 'rb') as f:
+			assets.appendRow([name, base64.b64encode(f.read()).decode()])
+assets.nodeX, assets.nodeY = 200, 300
+
+# the pairing QR, drawn inside the component: Show QR opens qrtop in a viewer window
+qe = comp.create(textDAT, 'qr')
+qe.text = text('orrery_qr.py')
+qe.nodeX, qe.nodeY = 200, 150
+qt = comp.create(scriptTOP, 'qrtop')
+for d in qt.docked:  # the default callbacks TouchDesigner makes; ours come from orrery_qrtop.py
+	d.destroy()
+qc = comp.create(textDAT, 'qrtop_callbacks')
+qc.text = text('orrery_qrtop.py')
+qc.nodeX, qc.nodeY = 400, 300
+qt.par.callbacks = qc
+qt.nodeX, qt.nodeY = 400, 150
 
 server = comp.create(webserverDAT, 'server')
 server.par.callbacks = 'callbacks'
@@ -74,7 +93,7 @@ pe.nodeX, pe.nodeY = 0, -150
 st = comp.create(parameterexecuteDAT, 'settings')
 st.text = text('orrery_settings.py')
 ops_par(st).val = '..'
-st.par.pars = 'Port Root Page Onair Newcode Refresh Showqr'
+st.par.pars = 'Port Root Page Onair Record Newcode Refresh Showqr'
 st.par.valuechange = True
 st.par.onpulse = True
 st.nodeX, st.nodeY = 200, -150
@@ -91,4 +110,4 @@ comp.par.Code = ''
 comp.unstore('*')
 comp.save(tox)
 ex.module.onStart()
-print('Orrery built and saved to %s. Open %s on a phone and enter %s, or press Show QR.' % (tox, comp.par.Address, comp.par.Code))
+print('Orrery built and saved to %s. Press Show QR and scan it, or open %s on any device and enter %s.' % (tox, comp.par.Address, comp.par.Code))

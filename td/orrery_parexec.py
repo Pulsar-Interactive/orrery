@@ -5,11 +5,7 @@ def onValueChange(par, prev):
 	m = op('callbacks').module
 	if par.page and par.page.name == m.page_name() and m.controls_page(par.owner):
 		m.broadcast(m.state(par.owner))
-		comp = parent()
-		live = comp.par.Onair.eval() if hasattr(comp.par, 'Onair') else ''
-		if live != comp.fetch('orrery_live', '', storeDefault=True):
-			comp.store('orrery_live', live)
-			m.broadcast(m.listing())
+		m.check_live()
 	return
 
 def onPulse(par):
