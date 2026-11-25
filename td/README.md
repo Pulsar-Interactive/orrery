@@ -7,6 +7,7 @@
 | `assets` | Table DAT | [web/](web): the app manifest, icons and Pulsar logo the page loads, as base64 (name, data) |
 | `qr` | Text DAT | [orrery_qr.py](orrery_qr.py): a QR code encoder in plain Python, no modules, no internet |
 | `qrtop` | Script TOP | callbacks [orrery_qrtop.py](orrery_qrtop.py): draws the pairing QR (address + code); Show QR opens it in a viewer window |
+| `qrtop_callbacks` | Text DAT | [orrery_qrtop.py](orrery_qrtop.py): the Script TOP's callbacks (replaces the default one TouchDesigner docks to it) |
 | `callbacks` | Text DAT | [orrery_callbacks.py](orrery_callbacks.py): pairing and the protocol |
 | `parexec` | Parameter Execute DAT | [orrery_parexec.py](orrery_parexec.py): OPs `<Controls In>/*`, pushes changes to phones |
 | `settings` | Parameter Execute DAT | [orrery_settings.py](orrery_settings.py): the component's own parameters, Show QR |

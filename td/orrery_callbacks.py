@@ -72,7 +72,11 @@ def project_name():
 	return re.sub(r'(\.\d+)?\.toe$', '', project.name)
 
 def live():
-	return me_comp().par.Onair.eval() if hasattr(me_comp().par, 'Onair') else ''
+	# A broken On Air expression (a typo, a deleted COMP) must not stop the list reaching phones.
+	try:
+		return me_comp().par.Onair.eval() if hasattr(me_comp().par, 'Onair') else ''
+	except Exception:
+		return ''
 
 def named_par(name, style=None):
 	# A component parameter set to an expression naming a parameter, e.g. op('show').par.Patch.
@@ -100,16 +104,19 @@ def recording():
 def can_go_live(par, name):
 	return par is not None and (not par.isMenu or name in par.menuNames)
 
+def on_air_now():
+	return '%s|%s' % (live(), recording())
+
 def check_live():
-	# Every phone gets a fresh list when what's on air, or recording, changed.
-	now = '%s|%s' % (live(), recording())
-	if now != me_comp().fetch('orrery_live', '', storeDefault=True):
-		me_comp().store('orrery_live', now)
+	# Every phone gets a fresh list when what's on air, or recording, changed since the last list.
+	now = on_air_now()
+	if now != me_comp().fetch('orrery_live', now, storeDefault=True):
 		broadcast(listing())
 
 def listing():
 	items = sorted(comps(), key=lambda o: label(o).lower())
 	lp = live_par()
+	me_comp().store('orrery_live', on_air_now())  # what the phones see now
 	return {
 		'type': 'list',
 		'project': project_name(),
@@ -179,14 +186,14 @@ def onWebSocketReceiveText(webServerDAT, client, data):
 			if not can_go_live(lp, name):
 				raise ValueError('%s can not go live from here' % name)
 			lp.val = name
-			check_live()
+			broadcast(listing())
 			return
 		elif kind == 'record':
 			rp = record_par()
 			if rp is None:
 				raise ValueError('no recorder set on the Orrery component')
 			rp.val = bool(msg.get('on'))
-			check_live()
+			broadcast(listing())
 			return
 		else:
 			o = find(msg.get('op'))
