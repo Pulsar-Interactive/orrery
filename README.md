@@ -89,6 +89,8 @@ All on the component's **Orrery** page:
 - **Firewall?** On macOS, allow TouchDesigner to accept incoming connections.
 - **Address changed?** Press **Refresh Address** (or **Show QR** again) after changing networks.
 - **Too much in the list?** Add the tag `orrery-hide` to a COMP (Common page › Tags) to keep it off the phone.
+- **Show-wide controls mixed in with the patches?** Tag a COMP `orrery-show` (sound input, playlist, autopilot…):
+  it moves to a **SHOW** section at the top of the list, apart from the patches.
 - **Nothing in the list?** The remote only lists COMPs next to the component that have a page named
   exactly **Controls** (or whatever **Page Name** says).
 

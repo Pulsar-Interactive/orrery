@@ -20,7 +20,7 @@ The phone opens `http://ADDRESS:PORT/` (or `/?code=CODE` from the QR, which the 
 from the address bar) and connects to `ws://ADDRESS:PORT/?code=CODE`. A wrong code gets `{"type": "denied"}` and is closed.
 
 ```
--> {"type": "list"}                       <- {"type": "list", "project", "live", "recording", "patches": [{"op", "label", "count", "canLive"}]}
+-> {"type": "list"}                       <- {"type": "list", "project", "live", "recording", "patches": [{"op", "label", "count", "canLive", "show"}]}
 -> {"type": "live", "op": "synth"}        (sets the parameter On Air names; every phone gets a new list)
 -> {"type": "record", "on": true}         (starts or stops the toggle Record names; every phone gets a new list)
 -> {"type": "get", "op": "synth"}         <- {"type": "state", "op", "controls": [...]}

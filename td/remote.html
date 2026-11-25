@@ -64,6 +64,7 @@ h1 { font: 700 24px/32px var(--display); margin: 0; }
 .list .name { flex: 1; display: grid; gap: 1px; }
 .list .count { font-size: 12px; color: var(--secondary); }
 .list .chev { color: var(--secondary); font-size: 18px; }
+.list + .group { padding-top: 20px; }
 .onair { font: 700 11px var(--display); letter-spacing: .08em; color: var(--onbrand); background: var(--brand); border-radius: 4px; padding: 2px 6px; margin-left: 8px; vertical-align: middle; }
 .val { font-variant-numeric: tabular-nums; color: var(--secondary); }
 .reset { font-size: 13px; color: var(--brand); padding: 8px 0 8px 12px; }
@@ -265,16 +266,22 @@ function showPair(error) {
 function showList() {
   panel = null;
   transport.hidden = true;
-  const items = patches.map((p) => el('button', { class: p.op === live ? 'live' : '', onclick: () => open(p.op) },
-    el('span', { class: 'pip', 'aria-hidden': 'true' }),
+  // COMPs tagged orrery-show (sound, playlist…) get their own SHOW section above the patches.
+  const item = (p) => el('button', { class: p.op === live ? 'live' : '', onclick: () => open(p.op) },
+    p.show ? null : el('span', { class: 'pip', 'aria-hidden': 'true' }),
     el('span', { class: 'name' },
       el('span', {}, p.label, p.op === live ? el('span', { class: 'onair' }, 'ON AIR') : null),
       p.count ? el('span', { class: 'count' }, p.count === 1 ? '1 control' : `${p.count} controls`) : null),
-    el('span', { class: 'chev', 'aria-hidden': 'true' }, '›')));
+    el('span', { class: 'chev', 'aria-hidden': 'true' }, '›'));
+  const show = patches.filter((p) => p.show), rest = patches.filter((p) => !p.show);
+  const sections = show.length
+    ? [el('div', { class: 'group' }, 'SHOW'), el('div', { class: 'list' }, ...show.map(item)),
+       rest.length ? el('div', { class: 'group' }, 'PATCHES') : null, rest.length ? el('div', { class: 'list' }, ...rest.map(item)) : null]
+    : [el('div', { class: 'list' }, ...rest.map(item))];
+  // (no section labels when nothing is tagged orrery-show)
   main.replaceChildren(
-    el('div', { class: 'title' }, el('h1', {}, project || 'Controls'), items.length ? el('p', { class: 'hint' }, 'Choose what to control') : null),
-    items.length ? el('div', { class: 'list' }, ...items)
-      : el('div', { class: 'card' }, el('p', { class: 'hint' }, 'Nothing to control yet. In TouchDesigner, add a custom parameter page named Controls to a COMP next to the Orrery component.')));
+    el('div', { class: 'title' }, el('h1', {}, project || 'Controls'), patches.length ? el('p', { class: 'hint' }, 'Choose what to control') : null),
+    ...(patches.length ? sections.filter(Boolean) : [el('div', { class: 'card' }, el('p', { class: 'hint' }, 'Nothing to control yet. In TouchDesigner, add a custom parameter page named Controls to a COMP next to the Orrery component.'))]));
 }
 
 function open(op) {

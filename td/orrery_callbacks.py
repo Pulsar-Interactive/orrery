@@ -10,7 +10,7 @@
 # closed; nothing is sent to or accepted from it.
 #
 # Messages (JSON):
-#   -> {"type": "list"}                       <- {"type": "list", "project", "live", "recording", "patches": [{"op", "label", "count", "canLive"}]}
+#   -> {"type": "list"}                       <- {"type": "list", "project", "live", "recording", "patches": [{"op", "label", "count", "canLive", "show"}]}
 #   -> {"type": "get", "op": "synth"}         <- {"type": "state", "op", "controls": [...]}
 #   -> {"type": "set", "op", "par", "value"}  (Pulse parameters ignore value)
 #   -> {"type": "live", "op": "synth"}        puts it on air (sets the parameter On Air names); every phone gets a new list
@@ -41,6 +41,7 @@ def controls_page(o):
 
 def comps():
 	# A COMP tagged orrery-hide keeps its Controls page (for other tools) but stays off the phone.
+	# One tagged orrery-show is show-wide (sound, playlist…), listed apart from the patches.
 	return [o for o in root().children if controls_page(o) and 'orrery-hide' not in o.tags]
 
 def find(name):
@@ -114,7 +115,7 @@ def listing():
 		'project': project_name(),
 		'live': live(),
 		'recording': recording(),
-		'patches': [{'op': o.name, 'label': label(o), 'count': len(controls_page(o).pars), 'canLive': can_go_live(lp, o.name)} for o in items],
+		'patches': [{'op': o.name, 'label': label(o), 'count': len(controls_page(o).pars), 'canLive': can_go_live(lp, o.name), 'show': 'orrery-show' in o.tags} for o in items],
 	}
 
 def state(o):
