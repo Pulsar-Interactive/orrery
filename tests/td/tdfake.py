@@ -1,10 +1,14 @@
 # A small fake of the parts of TouchDesigner the Orrery scripts use, so they can run under pytest.
-# Only what td/*.py touches is modelled: COMPs with custom pages and parameters, DATs with a
-# `module`, the Web Server DAT's send/close calls, `parent()`, `op()` and `project`.
+# Only what td/*.py touches is modelled: COMPs with custom pages and parameters (constant or
+# expression), DATs with a `module`, Table DATs, the Script TOP that draws the QR, the Web Server
+# DAT's send/close calls, `parent()`, `op()`, `project`, `ParMode` and `td.Par`.
+import base64
 import types
 from pathlib import Path
 
 TD_DIR = Path(__file__).resolve().parents[2] / 'td'
+
+ParMode = types.SimpleNamespace(CONSTANT='CONSTANT', EXPRESSION='EXPRESSION', EXPORT='EXPORT', BIND='BIND')
 
 
 class Par:
@@ -25,11 +29,24 @@ class Par:
 		self.clampMin = False
 		self.menuNames, self.menuLabels = list(menuNames), list(menuLabels)
 		self.expr = None
+		self.mode = ParMode.CONSTANT
 		self.pulses = 0
 		self.history = []
 
+	@property
+	def isMenu(self):
+		return self.style in ('Menu', 'StrMenu')
+
 	def eval(self):
+		if self.mode == ParMode.EXPRESSION and self.owner is not None:
+			r = self.owner.evalExpression(self.expr)
+			return r.eval() if isinstance(r, Par) else r
 		return self.val
+
+	def express(self, expr):
+		"""Puts the parameter in expression mode, like typing into its expression field."""
+		self.mode, self.expr = ParMode.EXPRESSION, expr
+		return self
 
 	def pulse(self):
 		self.pulses += 1
@@ -158,6 +175,17 @@ class OP:
 	def store(self, key, value):
 		self.storage[key] = value
 
+	def cook(self, force=False):
+		self.cooks = getattr(self, 'cooks', 0) + 1
+
+	def openViewer(self, unique=False, borders=True):
+		self.viewers = getattr(self, 'viewers', 0) + 1
+
+	def evalExpression(self, expr):
+		# A COMP's own parameters are evaluated in its parent's network: op('show') is a sibling.
+		where = self._parent if self.isCOMP and self._parent is not None else self
+		return eval(expr, {'op': where.op, 'parent': lambda: self._parent, 'me': self})
+
 	def destroy(self):
 		if self._parent is not None:
 			self._parent.children.remove(self)
@@ -193,6 +221,46 @@ class DAT(OP):
 		self.module = None
 
 
+class Cell:
+	def __init__(self, val):
+		self.val = val
+
+
+class TableDAT(DAT):
+	"""Rows of strings; table[row, col] finds a row by its first cell (or index), like TD."""
+
+	def __init__(self, name, parent=None):
+		super().__init__(name, parent)
+		self.rows_ = []
+
+	def clear(self):
+		self.rows_ = []
+
+	def appendRow(self, cells):
+		self.rows_.append([str(c) for c in cells])
+
+	@property
+	def numRows(self):
+		return len(self.rows_)
+
+	def __getitem__(self, key):
+		r, c = key
+		row = self.rows_[r] if isinstance(r, int) and r < len(self.rows_) else next((x for x in self.rows_ if x[0] == r), None)
+		return Cell(row[c]) if row is not None and c < len(row) else None
+
+
+class ScriptTOP(OP):
+	"""Keeps the last image copyNumpyArray was given."""
+
+	def __init__(self, name, parent=None):
+		super().__init__(name, parent)
+		self.docked = []
+		self.image = None
+
+	def copyNumpyArray(self, array):
+		self.image = array
+
+
 class WebServer(DAT):
 	def __init__(self, name='server', parent=None):
 		super().__init__(name, parent)
@@ -224,6 +292,8 @@ def load_module(filename, me, project_name='show.toe', extra=None):
 		'parent': lambda: me,
 		'op': lambda path: me.op(path),
 		'project': types.SimpleNamespace(name=project_name),
+		'ParMode': ParMode,
+		'td': types.SimpleNamespace(Par=Par),
 	})
 	if extra:
 		mod.__dict__.update(extra)
@@ -250,22 +320,34 @@ class World:
 		page.add('Root', 'COMP', value=None)
 		page.add('Page', 'Str', value='Controls', default='Controls')
 		page.add('Onair', 'Str', value='', default='')
+		page.add('Record', 'Str', value='', default='')
 		page.add('Refresh', 'Pulse')
 		o.par.Code = '123456'
 
 		self.server = WebServer('server', o)
 		self.remote = DAT('remote', o, (TD_DIR / 'remote.html').read_text(encoding='utf-8'))
-		self.pairpage = DAT('pairpage', o, (TD_DIR / 'pair.html').read_text(encoding='utf-8'))
+		self.assets = TableDAT('assets', o)
+		for f in sorted((TD_DIR / 'web').iterdir()):
+			if not f.name.startswith('.'):
+				self.assets.appendRow([f.name, base64.b64encode(f.read_bytes()).decode()])
+		self.qrtop = ScriptTOP('qrtop', o)
 		self.parexec_dat = DAT('parexec', o)
 		self.parexec_dat.par.ops.val = ''
 		for name, filename in (('callbacks', 'orrery_callbacks.py'), ('settings', 'orrery_settings.py'),
-				('parexec', 'orrery_parexec.py'), ('start', 'orrery_start.py')):
+				('parexec', 'orrery_parexec.py'), ('start', 'orrery_start.py'), ('qr', 'orrery_qr.py'),
+				('qrtop_callbacks', 'orrery_qrtop.py')):
 			dat = o.op(name) or DAT(name, o)
 			dat.module = load_module(filename, o, project_name)
 		self.cb = o.op('callbacks').module
 		self.settings = o.op('settings').module
 		self.parexec = o.op('parexec').module
 		self.start = o.op('start').module
+		self.qr = o.op('qr').module
+
+	def draw_qr(self):
+		"""Cooks the QR Script TOP the way TouchDesigner would and returns its image."""
+		self.orrery.op('qrtop_callbacks').module.onCook(self.qrtop)
+		return self.qrtop.image
 
 	def comp(self, name, parent=None, page='Controls'):
 		"""A COMP to control, with an (empty) custom page named `page`."""

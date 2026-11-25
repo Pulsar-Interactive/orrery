@@ -6,7 +6,6 @@ import { JSDOM } from 'jsdom';
 
 const root = fileURLToPath(new URL('../../', import.meta.url));
 export const REMOTE = readFileSync(root + 'td/remote.html', 'utf8');
-export const PAIR = readFileSync(root + 'td/pair.html', 'utf8');
 export const STATE = JSON.parse(readFileSync(root + 'tests/fixtures/synth_state.json', 'utf8'));
 export const LIST = { type: 'list', project: 'show', patches: [
   { op: 'synth', label: 'synth', count: STATE.controls.length },

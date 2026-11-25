@@ -113,13 +113,19 @@ Neither suite needs TouchDesigner:
 
 ```sh
 pip install -r tests/requirements.txt && pytest   # td/*.py against a fake TouchDesigner
-npm install && npm test                             # remote.html and pair.html in jsdom
+npm install && npm test                             # remote.html in jsdom
 ```
 
 `tests/td/tdfake.py` models only what the scripts touch (COMPs, custom pages, parameters, the
-Web Server DAT). `tests/fixtures/synth_state.json` is what the Python side must produce and what
-the remote's tests render, so the two halves can't drift apart. Some tests also check that
-build.py, this README and [td/README.md](td/README.md) still agree.
+Web Server DAT, the Script TOP that draws the QR). Every QR the component draws is decoded back
+with an independent reader (zxing-cpp). `tests/fixtures/synth_state.json` is what the Python side
+must produce and what the remote's tests render, so the two halves can't drift apart. Some tests
+also check that build.py, this README and [td/README.md](td/README.md) still agree.
+
+GitHub Actions runs both suites on every pull request, and fails one that changes what goes into
+the component without committing a rebuilt `td/orrery.tox`. Pushing a tag like `v0.1.0` (on
+master) runs them again and publishes a release with `orrery.tox` attached, which is what the
+download link points at.
 
 Issues and pull requests are welcome.
 
