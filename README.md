@@ -70,9 +70,9 @@ All on the component's **Orrery** page:
 | Port | 9980 | change it if 9980 is taken |
 | Controls In | `..` | the COMP whose children are listed |
 | Page Name | Controls | the parameter page the remote reads |
-| Refresh Address | | reads the address again after you change networks |
 | On Air | | optional: an expression that returns the name of the COMP on air, e.g. `op('show').par.Patch`; the phone marks it ON AIR. When it names a parameter like that, each patch's screen gets a GO LIVE button that sets it |
 | Record | | optional: an expression naming a recording Toggle, e.g. `op('recorder').par.Record`; every patch's screen gets a REC button next to GO LIVE, pinned to the top |
+| Refresh Address | | reads the address again after you change networks |
 
 ## Safe to hand over
 
@@ -106,6 +106,20 @@ exec(open('/path/to/orrery/td/build.py').read(), dict(globals(), TD_DIR='/path/t
 
 It builds `/project1/orrery` and saves `td/orrery.tox`. The protocol is plain JSON over a
 WebSocket, documented in [td/README.md](td/README.md), so you can write your own client.
+
+### Tests
+
+Neither suite needs TouchDesigner:
+
+```sh
+pip install -r tests/requirements.txt && pytest   # td/*.py against a fake TouchDesigner
+npm install && npm test                             # remote.html and pair.html in jsdom
+```
+
+`tests/td/tdfake.py` models only what the scripts touch (COMPs, custom pages, parameters, the
+Web Server DAT). `tests/fixtures/synth_state.json` is what the Python side must produce and what
+the remote's tests render, so the two halves can't drift apart. Some tests also check that
+build.py, this README and [td/README.md](td/README.md) still agree.
 
 Issues and pull requests are welcome.
 

@@ -1,0 +1,12 @@
+{
+  "name": "orrery-tests",
+  "private": true,
+  "description": "Tests for the Orrery phone remote (td/remote.html) and QR page (td/pair.html).",
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/remote/*.test.js"
+  },
+  "devDependencies": {
+    "jsdom": "^26.1.0"
+  }
+}

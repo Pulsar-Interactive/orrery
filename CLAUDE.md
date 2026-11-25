@@ -15,3 +15,5 @@ Repo `orrery` (public).
 - Pairing: a 6-digit code in the WebSocket URL; unpaired clients get nothing.
 - Never use "TouchDesigner" in the product name (Derivative's trademark).
 - Free and MIT (decided 2026-11-21): no paid tier. Its value is visibility and leads for Pulsar. The name, icon and Pulsar logo are not licensed (README).
+- Brand: the eclipse mark (decided 2026-11-23), files and rules in `assets/brand/`. The web
+  pages carry it inline as data URIs; rebuild the .tox after changing them.

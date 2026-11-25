@@ -194,8 +194,9 @@ let toastTimer = null;
 function toast(text, undo, err) {
   clearTimeout(toastTimer);
   toastEl.className = err ? 'err' : '';
-  toastEl.replaceChildren(el('span', {}, text),
-    undo ? el('button', { class: 'undo', onclick: () => { undo(); toastEl.hidden = true; } }, 'Undo') : null);
+  const parts = [el('span', {}, text)];
+  if (undo) parts.push(el('button', { class: 'undo', onclick: () => { undo(); toastEl.hidden = true; } }, 'Undo'));
+  toastEl.replaceChildren(...parts);
   toastEl.hidden = false;
   toastTimer = setTimeout(() => { toastEl.hidden = true; }, err ? 6000 : 5000);
 }
