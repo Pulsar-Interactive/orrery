@@ -1,4 +1,22 @@
-# Orrery
+<p align="center">
+  <a href="https://orrery.pulsarinteractive.ai/">
+    <img src="assets/brand/orrery-card.png" width="720" alt="Orrery: control TouchDesigner from your phone. Free and open source, by Pulsar Interactive.">
+  </a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Pulsar-Interactive/orrery/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Pulsar-Interactive/orrery/ci.yml?branch=master&label=tests&labelColor=111114" alt="Tests"></a>
+  <a href="https://github.com/Pulsar-Interactive/orrery/releases/latest"><img src="https://img.shields.io/github/v/release/Pulsar-Interactive/orrery?label=release&labelColor=111114&color=FFB020" alt="Latest release"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-05F9FE?labelColor=111114" alt="MIT license"></a>
+</p>
+
+<p align="center">
+  <a href="https://github.com/Pulsar-Interactive/orrery/releases/latest/download/orrery.tox"><b>Download orrery.tox</b></a>
+  &nbsp;·&nbsp;
+  <a href="https://orrery.pulsarinteractive.ai/">Website</a>
+  &nbsp;·&nbsp;
+  <a href="SETUP.md">Set up with AI</a>
+</p>
 
 **Your TouchDesigner parameters, on your phone.**
 
@@ -14,8 +32,8 @@ internet: scan the code with the camera and the remote opens in the browser.
 
 ## Quick start
 
-1. **Add the component.** Drag [`td/orrery.tox`](td/orrery.tox) into your project, next to the
-   COMPs you want to control.
+1. **Add the component.** [Download `orrery.tox`](https://github.com/Pulsar-Interactive/orrery/releases/latest/download/orrery.tox)
+   from the latest release and drag it into your project, next to the COMPs you want to control.
 2. **Pick your controls.** On any of those COMPs, add a custom parameter page named
    **Controls** (right-click the COMP › Customize Component…). Put the parameters you want on
    the phone on that page.
@@ -139,6 +157,15 @@ Interactive name and logo are not licensed for reuse: a fork or a published copy
 its own name and icon.
 
 ---
+
+<p align="center">
+  <a href="https://pulsarinteractive.ai">
+    <picture>
+      <source media="(prefers-color-scheme: dark)" srcset="td/web/pulsar.svg">
+      <img src="assets/brand/pulsar-wordmark-black.svg" width="160" alt="Pulsar Interactive">
+    </picture>
+  </a>
+</p>
 
 Made by [Pulsar Interactive](https://pulsarinteractive.ai), who build interactive shows and
 installations. TouchDesigner is a trademark of Derivative; Orrery is not affiliated with
