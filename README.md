@@ -6,8 +6,9 @@ Orrery is a free phone remote for TouchDesigner. You don't draw a layout or map 
 The parameters you already built become sliders, switches and buttons. Hand the phone to a
 client, a VJ or the venue tech, and they can only touch what you chose to show.
 
-There is no app to install. The component serves the remote itself: the phone scans a QR code
-and opens it in its browser.
+There is no app to install, and any device with a browser can connect: a phone, a tablet or a
+laptop. The component serves the remote itself and draws its own QR code, so pairing needs no
+internet: scan the code with the camera and the remote opens in the browser.
 
 > **Status: early (v0.1).** Feedback and issues are welcome.
 
@@ -18,14 +19,21 @@ and opens it in its browser.
 2. **Pick your controls.** On any of those COMPs, add a custom parameter page named
    **Controls** (right-click the COMP › Customize Component…). Put the parameters you want on
    the phone on that page.
-3. **Pair the phone.** Press **Show QR** on the component's **Orrery** page and scan the code
-   with the phone's camera. Or open the **Address** in the phone's browser and type the 6-digit
-   **Pairing Code**.
+3. **Pair the phone.** Press **Show QR** on the component's **Orrery** page: a window opens
+   with the QR code. Scan it with the phone's camera. Or open the **Address** in any browser
+   and type the 6-digit **Pairing Code**.
 
 That's it. The phone remembers the code, and changes made in TouchDesigner show up on the phone
-right away. Add the page to the home screen to open it like an app.
+right away. Add the page to the home screen to open it like an app: in Safari, Share → **Add to
+Home Screen** (it opens full screen, with the Orrery icon); in Chrome, ⋮ → **Add to Home screen**.
+The app opens the Address it was added from, so if the computer's address changes, add it again
+(or give the computer a fixed address on the router). An app added this way keeps its own
+memory, so it asks for the Pairing Code once.
 
 The phone and the computer must be on the same network.
+
+Prefer a guide? Paste [SETUP.md](SETUP.md) into Claude or ChatGPT: it asks what you want on the
+phone and writes the Textport script that builds the Controls page.
 
 ## What becomes what
 
@@ -54,7 +62,7 @@ All on the component's **Orrery** page:
 | Parameter | Default | What it does |
 |---|---|---|
 | Active | on | runs the server |
-| Show QR | | opens a QR code on this computer for the phone to scan |
+| Show QR | | opens a window with the pairing QR code, drawn by the component (no internet needed) |
 | Address | | the page to open on the phone (read only) |
 | Pairing Code | | the code the phone needs (read only) |
 | New Pairing Code | | makes a new code and disconnects every phone |
@@ -62,7 +70,8 @@ All on the component's **Orrery** page:
 | Port | 9980 | change it if 9980 is taken |
 | Controls In | `..` | the COMP whose children are listed |
 | Page Name | Controls | the parameter page the remote reads |
-| On Air | | optional: an expression that returns the name of the COMP on air, e.g. `op('show').par.Patch`; the phone marks it ON AIR |
+| On Air | | optional: an expression that returns the name of the COMP on air, e.g. `op('show').par.Patch`; the phone marks it ON AIR. When it names a parameter like that, each patch's screen gets a GO LIVE button that sets it |
+| Record | | optional: an expression naming a recording Toggle, e.g. `op('recorder').par.Record`; every patch's screen gets a REC button next to GO LIVE, pinned to the top |
 | Refresh Address | | reads the address again after you change networks |
 
 ## Safe to hand over
@@ -79,9 +88,9 @@ All on the component's **Orrery** page:
   networks often block devices from reaching each other. A phone hotspot works.
 - **Firewall?** On macOS, allow TouchDesigner to accept incoming connections.
 - **Address changed?** Press **Refresh Address** (or **Show QR** again) after changing networks.
-- **No QR code?** The QR page needs the internet on the computer to draw it. The address and
-  code are shown under it either way.
 - **Too much in the list?** Add the tag `orrery-hide` to a COMP (Common page › Tags) to keep it off the phone.
+- **Show-wide controls mixed in with the patches?** Tag a COMP `orrery-show` (sound input, playlist, autopilot…):
+  it moves to a **SHOW** section at the top of the list, apart from the patches.
 - **Nothing in the list?** The remote only lists COMPs next to the component that have a page named
   exactly **Controls** (or whatever **Page Name** says).
 
@@ -104,13 +113,19 @@ Neither suite needs TouchDesigner:
 
 ```sh
 pip install -r tests/requirements.txt && pytest   # td/*.py against a fake TouchDesigner
-npm install && npm test                             # remote.html and pair.html in jsdom
+npm install && npm test                             # remote.html in jsdom
 ```
 
 `tests/td/tdfake.py` models only what the scripts touch (COMPs, custom pages, parameters, the
-Web Server DAT). `tests/fixtures/synth_state.json` is what the Python side must produce and what
-the remote's tests render, so the two halves can't drift apart. Some tests also check that
-build.py, this README and [td/README.md](td/README.md) still agree.
+Web Server DAT, the Script TOP that draws the QR). Every QR the component draws is decoded back
+with an independent reader (zxing-cpp). `tests/fixtures/synth_state.json` is what the Python side
+must produce and what the remote's tests render, so the two halves can't drift apart. Some tests
+also check that build.py, this README and [td/README.md](td/README.md) still agree.
+
+GitHub Actions runs both suites on every pull request, and fails one that changes what goes into
+the component without committing a rebuilt `td/orrery.tox`. Pushing a tag like `v0.1.0` (on
+master) runs them again and publishes a release with `orrery.tox` attached, which is what the
+download link points at.
 
 Issues and pull requests are welcome.
 

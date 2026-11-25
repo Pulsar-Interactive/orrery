@@ -1,0 +1,38 @@
+# Pushing a version tag (git tag v0.1.0 && git push origin v0.1.0) runs the tests, then publishes
+# a GitHub Release with td/orrery.tox attached as orrery.tox. The landing page's download button
+# links to releases/latest/download/orrery.tox, so the newest release is what people get.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    uses: ./.github/workflows/ci.yml
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: The tag is on master
+        run: |
+          git fetch --no-tags origin master
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/master || {
+            echo "::error::$GITHUB_REF_NAME is not on master. Tag a commit that is merged."
+            exit 1
+          }
+      - name: Publish
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          test -s td/orrery.tox
+          gh release create "$TAG" "td/orrery.tox#orrery.tox (drop into any TouchDesigner project)" \
+            --title "Orrery $TAG" --generate-notes --verify-tag

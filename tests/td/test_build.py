@@ -3,7 +3,7 @@ import re
 import types
 
 import pytest
-from tdfake import COMP, DAT, TD_DIR, WebServer
+from tdfake import COMP, DAT, TD_DIR, ScriptTOP, TableDAT, WebServer
 
 README = (TD_DIR.parent / 'README.md').read_text(encoding='utf-8')
 TD_README = (TD_DIR / 'README.md').read_text(encoding='utf-8')
@@ -39,6 +39,13 @@ class ServerDAT(WebServer):
 	pass
 
 
+class BuildScriptTOP(ScriptTOP):
+	def __init__(self, name, parent=None):
+		super().__init__(name, parent)
+		# the default callbacks DAT TouchDesigner docks to a new Script TOP
+		self.docked = [DAT(name + '_callbacks_default', parent)]
+
+
 @pytest.fixture
 def built(capsys):
 	top = BuildCOMP('')
@@ -46,7 +53,7 @@ def built(capsys):
 	old = BuildCOMP('orrery', home)
 	g = {
 		'op': lambda path: top.op(path),
-		'baseCOMP': BuildCOMP, 'textDAT': DAT, 'webserverDAT': ServerDAT,
+		'baseCOMP': BuildCOMP, 'textDAT': DAT, 'webserverDAT': ServerDAT, 'tableDAT': TableDAT, 'scriptTOP': BuildScriptTOP,
 		'parameterexecuteDAT': DAT, 'executeDAT': StartDAT,
 		'TD_DIR': str(TD_DIR), '__name__': '__build__',
 	}
@@ -89,6 +96,7 @@ def test_parameters_in_order(built):
 		('Root', 'COMP', 'Controls In'),
 		('Page', 'Str', 'Page Name'),
 		('Onair', 'Str', 'On Air'),
+		('Record', 'Str', 'Record'),
 		('Refresh', 'Pulse', 'Refresh Address'),
 	]
 
@@ -113,14 +121,32 @@ def test_port_range(built):
 
 
 def test_dats_hold_the_files(built):
-	for name, filename in (('callbacks', 'orrery_callbacks.py'), ('remote', 'remote.html'), ('pairpage', 'pair.html'),
-			('parexec', 'orrery_parexec.py'), ('settings', 'orrery_settings.py'), ('start', 'orrery_start.py')):
+	for name, filename in (('callbacks', 'orrery_callbacks.py'), ('remote', 'remote.html'), ('qr', 'orrery_qr.py'),
+			('qrtop_callbacks', 'orrery_qrtop.py'), ('parexec', 'orrery_parexec.py'), ('settings', 'orrery_settings.py'),
+			('start', 'orrery_start.py')):
 		assert built.comp.op(name).text == (TD_DIR / filename).read_text(encoding='utf-8'), name
 
 
 def test_operators_match_the_td_readme(built):
 	documented = re.findall(r'^\| `(\w+)` \|', TD_README, re.M)
 	assert sorted(documented) == sorted(c.name for c in built.comp.children)
+
+
+def test_assets_hold_every_web_file_as_base64(built):
+	import base64
+	table = built.comp.op('assets')
+	files = sorted(f for f in (TD_DIR / 'web').iterdir() if not f.name.startswith('.'))
+	assert table.numRows == len(files)
+	for f in files:
+		assert base64.b64decode(table[f.name, 1].val) == f.read_bytes(), f.name
+
+
+def test_qr_top_draws_with_our_callbacks_only(built):
+	qt = built.comp.op('qrtop')
+	assert isinstance(qt, BuildScriptTOP)
+	assert qt.par.callbacks.eval() is built.comp.op('qrtop_callbacks')
+	# TouchDesigner's default callbacks DAT is removed, so only orrery_qrtop.py runs
+	assert not any(c.name.endswith('_callbacks_default') for c in built.comp.children)
 
 
 def test_server_follows_the_component(built):
@@ -145,7 +171,7 @@ def test_settings_watches_the_component(built):
 	watched = st.par.pars.eval().split()
 	_, pars = page_pars(built)
 	assert set(watched) <= set(pars)
-	assert set(watched) == {'Port', 'Root', 'Page', 'Onair', 'Newcode', 'Refresh', 'Showqr'}
+	assert set(watched) == {'Port', 'Root', 'Page', 'Onair', 'Record', 'Newcode', 'Refresh', 'Showqr'}
 
 
 def test_every_pulse_is_handled_by_settings(built):

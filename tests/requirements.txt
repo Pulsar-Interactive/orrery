@@ -1,1 +1,4 @@
 pytest>=8
+numpy>=2
+# an independent QR reader: the QR tests decode every code the component draws
+zxing-cpp>=2.2

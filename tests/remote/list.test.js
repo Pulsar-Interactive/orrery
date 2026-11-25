@@ -7,8 +7,13 @@ test('the list shows the project and each patch', () => {
   const r = load({ stored: '123456' });
   r.live();
   assert.equal(r.title(), 'show');
-  const rows = r.$$('.list button').map((b) => [...b.children].map((c) => c.textContent));
-  assert.deepEqual(rows, [['synth', '›'], ['my fx', '›']]);
+  // each row: a status pip, the name with its number of controls, and a chevron
+  const rows = r.$$('.list button').map((b) => [
+    !!b.querySelector('.pip'), b.querySelector('.name > span').textContent,
+    b.querySelector('.count')?.textContent, b.querySelector('.chev').textContent]);
+  assert.deepEqual(rows, [
+    [true, 'synth', `${STATE.controls.length} controls`, '›'],
+    [true, 'my fx', '1 control', '›']]);
 });
 
 test('the patch on air is marked in the list', () => {
@@ -55,7 +60,7 @@ test('a new list replaces the old one', () => {
   const r = load({ stored: '123456' });
   const s = r.live();
   s.receive({ type: 'list', project: 'show', patches: [{ op: 'lights', label: 'lights', count: 3 }] });
-  assert.deepEqual(r.$$('.list button').map((b) => b.firstChild.textContent), ['lights']);
+  assert.deepEqual(r.$$('.list .name > span:first-child').map((n) => n.textContent), ['lights']);
 });
 
 test('tapping a patch asks for its state', () => {
@@ -167,13 +172,14 @@ test('names from TouchDesigner are shown as text, never as HTML', () => {
   const evil = '<img src=x onerror="window.pwned=1">';
   const s = r.live({ type: 'list', project: evil, patches: [{ op: 'a', label: evil, count: 1 }] });
   assert.equal(r.title(), evil);
-  assert.equal(r.$('img'), null);
+  const injected = () => r.$('img[src=x]'); // the splash's Pulsar logo is the page's only real <img>
+  assert.equal(injected(), null);
   r.$('.list button').click();
   s.receive({ type: 'state', op: 'a', controls: [
     { name: 'H', label: evil, style: 'Header' },
     { name: 'S', label: evil, style: 'Str', value: evil },
     { name: 'M', label: evil, style: 'Menu', value: 'x', options: [['x', evil]] },
   ] });
-  assert.equal(r.$('img'), null);
+  assert.equal(injected(), null);
   assert.equal(r.window.pwned, undefined);
 });

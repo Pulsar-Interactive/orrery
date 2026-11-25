@@ -1,18 +1,25 @@
-// Static checks on the two pages, and the QR page as Show QR fills it in.
+// Static checks on the remote page. The QR is drawn inside the component now (tests/td/test_qr.py),
+// so the remote is the only page the component serves.
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { JSDOM } from 'jsdom';
-import { REMOTE, PAIR } from './harness.js';
+import { readdirSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import { REMOTE } from './harness.js';
 
-function fillPair(url, address, code) {
-  // the same three replacements orrery_settings.show_qr() makes
-  return PAIR.replaceAll('{{URL}}', url).replaceAll('{{ADDRESS}}', address).replaceAll('{{CODE}}', code);
-}
+const WEB = readdirSync(fileURLToPath(new URL('../../td/web/', import.meta.url))).filter((f) => !f.startsWith('.'));
 
-test('the remote is one self-contained page', () => {
+test('the remote loads nothing from the internet', () => {
+  // it has to work on a show network with no internet: no CDN scripts, styles or fonts
   assert.doesNotMatch(REMOTE, /<script[^>]+src=/);
-  assert.doesNotMatch(REMOTE, /<link[^>]+href="(?!data:)/); // data: URIs (the icon) are inline
-  assert.doesNotMatch(REMOTE, /@import|url\(http/);
+  assert.doesNotMatch(REMOTE, /<link[^>]+href="https?:/);
+  assert.doesNotMatch(REMOTE, /<img[^>]+src="https?:/);
+  assert.doesNotMatch(REMOTE, /@import|url\(["']?https?:/);
+});
+
+test('every file the remote links is one the component serves', () => {
+  const linked = [...REMOTE.matchAll(/(?:href|src)="\/([\w.-]+)"/g)].map((m) => m[1]);
+  assert.ok(linked.length >= 4, 'manifest, icons and the Pulsar logo');
+  for (const name of linked) assert.ok(WEB.includes(name), name);
 });
 
 test('the remote never writes HTML from data', () => {
@@ -23,6 +30,7 @@ test('the remote never writes HTML from data', () => {
 test('the remote is set up for phones', () => {
   assert.match(REMOTE, /name="viewport" content="[^"]*viewport-fit=cover/);
   assert.match(REMOTE, /apple-mobile-web-app-capable/);
+  assert.match(REMOTE, /<link rel="manifest" href="\/manifest\.webmanifest"/);
   assert.match(REMOTE, /<html lang="en">/);
 });
 
@@ -34,49 +42,19 @@ test('the only outside link is the project page, opened safely', () => {
 });
 
 test('the product is never named TouchDesigner', () => {
-  for (const page of [REMOTE, PAIR]) {
-    const title = page.match(/<title>(.*?)<\/title>/)[1];
-    assert.doesNotMatch(title, /TouchDesigner/);
-    assert.match(title, /Orrery/);
-  }
+  const title = REMOTE.match(/<title>(.*?)<\/title>/)[1];
+  assert.doesNotMatch(title, /TouchDesigner/);
+  assert.match(title, /Orrery/);
 });
 
-test('both pages use the same brand colours', () => {
-  for (const colour of ['#0E1214', '#4FD3DE', '#E8EDEF', '#9AA6AB']) {
-    assert.ok(REMOTE.includes(colour), colour);
-    assert.ok(PAIR.includes(colour), colour);
-  }
+test('the remote uses the Orrery colours', () => {
+  // page, raised surfaces, Sol Amber (brand) and the cyan used for selection
+  for (const colour of ['#111114', '#1C1C1C', '#FFB020', '#05F9FE']) assert.ok(REMOTE.includes(colour), colour);
+  assert.match(REMOTE, /<meta name="theme-color" content="#111114">/);
 });
 
-test('the QR page has exactly the placeholders Show QR fills', () => {
-  assert.deepEqual([...new Set([...PAIR.matchAll(/\{\{(\w+)\}\}/g)].map((m) => m[1]))].sort(), ['ADDRESS', 'CODE', 'URL']);
-});
-
-test('the QR library is pinned with subresource integrity', () => {
-  const tag = PAIR.match(/<script src="[^"]+"[^>]*>/)[0];
-  assert.match(tag, /^<script src="https:\/\//);
-  assert.match(tag, /integrity="sha384-[A-Za-z0-9+/=]+"/);
-  assert.match(tag, /crossorigin="anonymous"/);
-});
-
-test('the QR encodes the address with the code', () => {
-  let made = null;
-  const dom = new JSDOM(fillPair('http://192.168.1.20:9980/?code=042137', 'http://192.168.1.20:9980', '042137'), {
-    runScripts: 'dangerously',
-    beforeParse(window) {
-      window.QRCode = function QRCode(el, opts) { made = { el, opts }; };
-      window.QRCode.CorrectLevel = { M: 'M' };
-    },
-  });
-  assert.equal(made.opts.text, 'http://192.168.1.20:9980/?code=042137');
-  assert.equal(made.opts.correctLevel, 'M');
-  assert.equal(made.el, dom.window.document.getElementById('qr'));
-});
-
-test('without the internet the address and code are still shown', () => {
-  const dom = new JSDOM(fillPair('http://10.0.0.2:9980/?code=111222', 'http://10.0.0.2:9980', '111222'), { runScripts: 'dangerously' });
-  const doc = dom.window.document;
-  assert.equal(doc.querySelector('.addr').textContent, 'http://10.0.0.2:9980');
-  assert.equal(doc.querySelector('.code').textContent, '111222');
-  assert.equal(doc.getElementById('qr').childElementCount, 0);
+test('the pairing code is never written into the page', () => {
+  // the component serves the same page to everyone; the code only travels in the WebSocket URL
+  assert.doesNotMatch(REMOTE, /\{\{\w+\}\}/);
+  assert.doesNotMatch(REMOTE, /code=\d{6}/);
 });

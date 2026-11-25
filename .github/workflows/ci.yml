@@ -1,0 +1,67 @@
+# Runs the tests on every push to master and every pull request. release.yml calls it too, so a
+# release is never cut from code that fails them.
+name: CI
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  workflow_call:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  component:
+    name: Component (Python)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11' # the Python TouchDesigner 2025 ships
+          cache: pip
+          cache-dependency-path: tests/requirements.txt
+      - run: pip install -r tests/requirements.txt
+      - run: python -m pytest -q tests/td
+
+  remote:
+    name: Phone remote (Node)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm test
+
+  tox:
+    # td/orrery.tox is built in TouchDesigner (td/build.py), which CI can't run. So a pull request
+    # that changes what goes into it must also commit the rebuilt .tox, or the download is stale.
+    name: orrery.tox rebuilt
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Sources changed means the .tox changed
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          changed=$(git diff --name-only "$BASE" "$HEAD")
+          sources=$(echo "$changed" | grep -E '^td/(orrery_[a-z_]+\.py|remote\.html|build\.py|web/)' || true)
+          if [ -n "$sources" ] && ! echo "$changed" | grep -qx 'td/orrery.tox'; then
+            echo "::error file=td/orrery.tox::These go into orrery.tox but it was not rebuilt:"
+            echo "$sources"
+            echo "Run td/build.py in TouchDesigner (see the comment at its top) and commit td/orrery.tox."
+            exit 1
+          fi
+          echo "ok"

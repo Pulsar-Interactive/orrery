@@ -10,7 +10,7 @@ function panel(state = STATE) {
   const r = load({ stored: '123456' });
   const s = r.openPanel(state);
   // One entry per control, in order: buttons sharing a row (.btns) count one each.
-  const nodes = () => [...r.$('.card').children].slice(1)
+  const nodes = () => [...r.$('.card').children]
     .flatMap((n) => n.classList.contains('btns') ? [...n.children] : [n]);
   const node = (name) => nodes()[IDX[name]];
   const push = (changes) => {
@@ -32,7 +32,10 @@ const shown = (n) => n.querySelector('.val').textContent;
 
 test('one node per control, in order, under the patch title', () => {
   const { r, nodes } = panel();
-  assert.equal(r.$('.card').children[0].tagName, 'H1');
+  // the title sits above the card, with a way back to the list
+  assert.equal(r.title(), 'synth');
+  assert.ok(r.$('.title + .card'));
+  assert.equal(r.$('.title .back').getAttribute('aria-label'), 'Back to the list');
   assert.equal(nodes().length, STATE.controls.length);
 });
 
@@ -519,7 +522,8 @@ test('reopening a patch after back builds it fresh', () => {
 
 test('an empty panel is just its title', () => {
   const { r } = withControls([]);
-  assert.equal(r.$('.card').children.length, 1);
+  assert.equal(r.title(), 'synth');
+  assert.equal(r.$('.card').children.length, 0);
 });
 
 test('controls send to the patch they belong to', () => {

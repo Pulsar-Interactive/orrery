@@ -11,16 +11,6 @@ def lan(world, monkeypatch):
 	monkeypatch.setattr(world.cb, 'address', lambda: 'http://192.168.1.20:%d' % int(world.orrery.par.Port))
 
 
-@pytest.fixture
-def browser(monkeypatch, tmp_path):
-	opened = []
-	import tempfile
-	import webbrowser
-	monkeypatch.setattr(webbrowser, 'open', lambda url: opened.append(url))
-	monkeypatch.setattr(tempfile, 'gettempdir', lambda: str(tmp_path))
-	return opened
-
-
 # --- pairing codes -------------------------------------------------------------------------
 
 def test_new_code_is_six_digits(world):
@@ -146,43 +136,46 @@ def test_unknown_pulse_does_nothing(world):
 
 
 # --- Show QR -------------------------------------------------------------------------------
+# The QR is drawn inside the component (Script TOP `qrtop`) and opened in a viewer window: no
+# browser, no file, no internet.
 
-def test_show_qr_writes_a_local_page_and_opens_it(world, browser, tmp_path):
+def test_show_qr_opens_the_qr_viewer(world):
 	world.settings.onPulse(world.orrery.par.Showqr)
-	path = tmp_path / 'orrery-pair.html'
-	assert browser == ['file://' + str(path)]
-	html = path.read_text(encoding='utf-8')
-	assert "text: 'http://192.168.1.20:9980/?code=123456'" in html
-	assert '<div class="addr">http://192.168.1.20:9980</div>' in html
-	assert '<div class="code">123456</div>' in html
-	assert '{{' not in html
+	assert world.qrtop.viewers == 1
+	assert world.qrtop.cooks >= 1
 
 
-def test_show_qr_refreshes_first(world, browser, tmp_path):
+def test_show_qr_refreshes_first(world):
 	world.orrery.par.Port = 10000
 	world.settings.show_qr(world.orrery)
 	assert world.orrery.par.Address.eval() == 'http://192.168.1.20:10000'
-	assert 'http://192.168.1.20:10000/?code=123456' in (tmp_path / 'orrery-pair.html').read_text()
 
 
-def test_show_qr_does_not_touch_the_template(world, browser):
-	before = world.pairpage.text
+def test_show_qr_draws_the_address_with_the_code(world, monkeypatch):
+	drawn = []
+	real = world.qr.matrix
+	monkeypatch.setattr(world.qr, 'matrix', lambda text, mask=None: drawn.append(text) or real(text, mask))
 	world.settings.show_qr(world.orrery)
-	assert world.pairpage.text == before
+	world.draw_qr()
+	assert drawn[-1] == 'http://192.168.1.20:9980/?code=123456'
 
 
-def test_show_qr_overwrites_the_previous_page(world, browser, tmp_path):
-	world.settings.show_qr(world.orrery)
-	world.orrery.par.Code = '654321'
-	world.settings.show_qr(world.orrery)
-	html = (tmp_path / 'orrery-pair.html').read_text()
-	assert '654321' in html and '123456' not in html
-
-
-def test_show_qr_sends_nothing_to_phones(world, browser):
+def test_show_qr_sends_nothing_to_phones(world):
 	world.pair('a')
 	world.settings.show_qr(world.orrery)
 	assert world.server.sent == []
+
+
+def test_new_code_redraws_the_qr(world):
+	before = getattr(world.qrtop, 'cooks', 0)
+	world.settings.new_code(world.orrery)
+	assert world.qrtop.cooks == before + 1
+
+
+def test_refresh_redraws_the_qr(world):
+	before = getattr(world.qrtop, 'cooks', 0)
+	world.settings.refresh(world.orrery)
+	assert world.qrtop.cooks == before + 1
 
 
 # --- start ---------------------------------------------------------------------------------
@@ -289,6 +282,8 @@ def test_many_comps_push_only_their_own_state(world):
 
 def test_control_change_that_moves_on_air_also_pushes_the_list(world, synth):
 	world.pair('a')
+	world.ask('a', {'type': 'list'})  # a phone asks for the list when it connects
+	world.server.sent.clear()
 	world.orrery.par.Onair = 'synth'
 	world.parexec.onValueChange(synth.par.Cutoff, 0.25)
 	assert [m['type'] for m in world.server.to('a')] == ['state', 'list']
@@ -297,6 +292,8 @@ def test_control_change_that_moves_on_air_also_pushes_the_list(world, synth):
 
 def test_list_is_pushed_only_when_on_air_changes(world, synth):
 	world.pair('a')
+	world.ask('a', {'type': 'list'})  # a phone asks for the list when it connects
+	world.server.sent.clear()
 	world.orrery.par.Onair = 'synth'
 	world.parexec.onValueChange(synth.par.Cutoff, 0.25)
 	world.parexec.onValueChange(synth.par.Cutoff, 0.5)
