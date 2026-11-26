@@ -21,8 +21,9 @@ def check_setup(comp):
 		('Okphone', comp.par.Phones.eval() > 0, 'Press Show QR and scan it with a phone.'),
 	]
 	for name, ok, _ in checks:
-		if bool(comp.par[name].eval()) != ok:
-			comp.par[name] = ok
+		par = getattr(comp.par, name)
+		if bool(par.eval()) != ok:
+			par.val = ok
 	todo = next((hint for _, ok, hint in checks if not ok), 'Everything is set. Phones can control this project.')
 	if comp.par.Nextstep.eval() != todo:
 		comp.par.Nextstep = todo
