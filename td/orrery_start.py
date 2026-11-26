@@ -1,4 +1,5 @@
-# Execute DAT `start` inside the Orrery component: fills in the address and a first pairing code.
+# Execute DAT `start` inside the Orrery component: fills in the address and a first pairing code,
+# and re-checks the Setup page once a second.
 def onStart():
 	comp = parent()
 	s = op('settings').module
@@ -9,4 +10,9 @@ def onStart():
 
 def onCreate():
 	onStart()
+	return
+
+def onFrameEnd(frame):
+	if frame % 60 == 0:
+		op('settings').module.check_setup(parent())
 	return
