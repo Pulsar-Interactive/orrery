@@ -17,8 +17,7 @@ def check_setup(comp):
 	checks = [
 		('Okserver', bool(op('server').par.active.eval()), 'Turn Active on, so a phone can reach this component.'),
 		('Okcomps', bool(neighbours), 'Put a COMP next to Orrery, or point Controls In at the network that has your COMPs.'),
-		('Okpage', bool(shown), 'Add a custom parameter page named %s to a COMP (right-click it, Customize Component).' % page),
-		('Okpars', any(len(m.controls_page(o).pars) for o in shown), 'Put at least one parameter on the %s page.' % page),
+		('Okpage', bool(shown), 'Add a custom parameter page named %s, with a parameter on it, to a COMP (right-click it, Customize Component).' % page),
 		('Okphone', comp.par.Phones.eval() > 0, 'Press Show QR and scan it with a phone.'),
 	]
 	for name, ok, _ in checks:

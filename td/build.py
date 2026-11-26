@@ -44,7 +44,7 @@ comp.par.Root = '..'
 # The Setup page: what is still missing for the phone to work (filled in by settings.check_setup)
 sp = comp.appendCustomPage('Setup')
 for name, label in (('Okserver', 'Server running'), ('Okcomps', 'COMPs next to Orrery'),
-		('Okpage', 'A Controls page on a COMP'), ('Okpars', 'Parameters on that page'), ('Okphone', 'A phone is paired')):
+		('Okpage', 'A Controls page on a COMP'), ('Okphone', 'A phone is paired')):
 	sp.appendToggle(name, label=label)[0].readOnly = True
 sp.appendStr('Nextstep', label='Next Step')[0].readOnly = True
 sp.appendPulse('Checksetup', label='Check Setup')

@@ -15,7 +15,7 @@
 
 The component has two parameter pages. **Orrery** holds the settings (port, pairing, Show QR). **Setup**
 is a checklist of what the phone needs, ticked by `settings.check_setup`: server running, COMPs next to
-Orrery, a Controls page on one of them, parameters on it, and a paired phone. Next Step says what to do
+Orrery, a Controls page (with a parameter on it) on one of them, and a paired phone. Next Step says what to do
 about the first one that is missing, and Open the Guide opens https://orrery.pulsarinteractive.ai/#how.
 
 [build.py](build.py) creates all of it and saves `orrery.tox`.
