@@ -323,6 +323,15 @@ class World:
 		page.add('Record', 'Str', value='', default='')
 		page.add('Refresh', 'Pulse')
 		o.par.Code = '123456'
+		setup = o.page('Setup')
+		for name in ('Okserver', 'Okcomps', 'Okpage', 'Okphone'):
+			setup.add(name, 'Toggle', value=False, default=False, readOnly=True)
+		setup.add('Nextstep', 'Str', value='', readOnly=True)
+		setup.add('Checksetup', 'Pulse')
+		setup.add('Help', 'Pulse')
+		setup.add('Guide', 'Str', value='', readOnly=True)
+		self.viewed = []  # what ui.viewFile was asked to open
+		self.ui = types.SimpleNamespace(viewFile=self.viewed.append)
 
 		self.server = WebServer('server', o)
 		self.remote = DAT('remote', o, (TD_DIR / 'remote.html').read_text(encoding='utf-8'))
@@ -337,7 +346,7 @@ class World:
 				('parexec', 'orrery_parexec.py'), ('start', 'orrery_start.py'), ('qr', 'orrery_qr.py'),
 				('qrtop_callbacks', 'orrery_qrtop.py')):
 			dat = o.op(name) or DAT(name, o)
-			dat.module = load_module(filename, o, project_name)
+			dat.module = load_module(filename, o, project_name, extra={'ui': self.ui})
 		self.cb = o.op('callbacks').module
 		self.settings = o.op('settings').module
 		self.parexec = o.op('parexec').module

@@ -298,3 +298,105 @@ def test_list_is_pushed_only_when_on_air_changes(world, synth):
 	world.parexec.onValueChange(synth.par.Cutoff, 0.25)
 	world.parexec.onValueChange(synth.par.Cutoff, 0.5)
 	assert [m['type'] for m in world.server.to('a')] == ['state', 'list', 'state']
+
+
+# --- the Setup page ------------------------------------------------------------------------
+
+SETUP = ('Okserver', 'Okcomps', 'Okpage', 'Okphone')
+
+
+def ticks(world):
+	return {n: bool(getattr(world.orrery.par, n).eval()) for n in SETUP}
+
+
+def test_setup_with_nothing_beside_orrery(world):
+	world.settings.check_setup(world.orrery)
+	assert ticks(world) == {'Okserver': True, 'Okcomps': False, 'Okpage': False, 'Okphone': False}
+	assert world.orrery.par.Nextstep.eval().startswith('Put a COMP next to Orrery')
+
+
+def test_setup_a_comp_without_the_page(world):
+	COMP('plain', world.project)
+	world.settings.check_setup(world.orrery)
+	assert ticks(world) == {'Okserver': True, 'Okcomps': True, 'Okpage': False, 'Okphone': False}
+	assert 'named Controls' in world.orrery.par.Nextstep.eval()
+
+
+def test_setup_follows_the_page_name(world):
+	add_synth(world)
+	world.orrery.par.Page = 'Other'
+	world.settings.check_setup(world.orrery)
+	assert ticks(world)['Okpage'] is False
+	assert 'named Other' in world.orrery.par.Nextstep.eval()
+
+
+def test_setup_a_hidden_comp_does_not_count(world):
+	add_synth(world).tags.add('orrery-hide')
+	world.settings.check_setup(world.orrery)
+	assert ticks(world)['Okpage'] is False
+
+
+def test_setup_a_controls_page_asks_for_a_phone(world):
+	add_synth(world)
+	world.settings.check_setup(world.orrery)
+	assert ticks(world) == {'Okserver': True, 'Okcomps': True, 'Okpage': True, 'Okphone': False}
+	assert world.orrery.par.Nextstep.eval() == 'Press Show QR and scan it with a phone.'
+
+
+def test_setup_all_set_with_a_phone(world):
+	add_synth(world)
+	world.orrery.par.Phones = 1
+	world.settings.check_setup(world.orrery)
+	assert all(ticks(world).values())
+	assert world.orrery.par.Nextstep.eval().startswith('Everything is set')
+
+
+def test_setup_server_off(world):
+	world.server.par.active.val = False
+	world.settings.check_setup(world.orrery)
+	assert ticks(world)['Okserver'] is False
+	assert world.orrery.par.Nextstep.eval().startswith('Turn Active on')
+
+
+def test_setup_follows_changes(world):
+	world.settings.check_setup(world.orrery)
+	assert ticks(world)['Okpage'] is False
+	add_synth(world)
+	world.settings.check_setup(world.orrery)
+	assert ticks(world)['Okpage'] is True
+
+
+def test_setup_writes_only_what_changed(world):
+	add_synth(world)
+	world.settings.check_setup(world.orrery)
+	written = {n: list(getattr(world.orrery.par, n).history) for n in SETUP + ('Nextstep', 'Guide')}
+	world.settings.check_setup(world.orrery)  # nothing changed, so nothing is written
+	assert written == {n: list(getattr(world.orrery.par, n).history) for n in SETUP + ('Nextstep', 'Guide')}
+
+
+def test_setup_names_the_guide(world):
+	world.settings.check_setup(world.orrery)
+	assert world.orrery.par.Guide.eval() == 'https://orrery.pulsarinteractive.ai/#how'
+
+
+def test_refresh_checks_setup(world):
+	world.settings.refresh(world.orrery)
+	assert world.orrery.par.Nextstep.eval()
+
+
+def test_check_setup_pulse(world):
+	world.settings.onPulse(world.orrery.par.Checksetup)
+	assert world.orrery.par.Nextstep.eval()
+
+
+def test_help_pulse_opens_the_guide(world):
+	world.settings.onPulse(world.orrery.par.Help)
+	assert world.viewed == ['https://orrery.pulsarinteractive.ai/#how']
+
+
+def test_start_frame_end_rechecks_once_a_second(world):
+	for frame in (1, 59, 61):
+		world.start.onFrameEnd(frame)
+	assert world.orrery.par.Nextstep.eval() == ''  # not a multiple of 60: nothing ran
+	world.start.onFrameEnd(60)
+	assert world.orrery.par.Nextstep.eval()
