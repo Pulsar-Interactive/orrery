@@ -41,6 +41,16 @@ for p in page.pars:
 		p.val = p.default
 comp.par.Root = '..'
 
+# The Setup page: what is still missing for the phone to work (filled in by settings.check_setup)
+sp = comp.appendCustomPage('Setup')
+for name, label in (('Okserver', 'Server running'), ('Okcomps', 'COMPs next to Orrery'),
+		('Okpage', 'A Controls page on a COMP'), ('Okphone', 'A phone is paired')):
+	sp.appendToggle(name, label=label)[0].readOnly = True
+sp.appendStr('Nextstep', label='Next Step')[0].readOnly = True
+sp.appendPulse('Checksetup', label='Check Setup')
+sp.appendPulse('Help', label='Open the Guide')
+sp.appendStr('Guide', label='Guide')[0].readOnly = True
+
 def ops_par(d):
 	# the Parameter Execute DAT's OPs parameter
 	return d.par.ops if hasattr(d.par, 'ops') else d.par.op
@@ -93,7 +103,7 @@ pe.nodeX, pe.nodeY = 0, -150
 st = comp.create(parameterexecuteDAT, 'settings')
 st.text = text('orrery_settings.py')
 ops_par(st).val = '..'
-st.par.pars = 'Port Root Page Onair Record Newcode Refresh Showqr'
+st.par.pars = 'Port Root Page Onair Record Newcode Refresh Showqr Checksetup Help'
 st.par.valuechange = True
 st.par.onpulse = True
 st.nodeX, st.nodeY = 200, -150
@@ -102,6 +112,7 @@ ex = comp.create(executeDAT, 'start')
 ex.text = text('orrery_start.py')
 ex.par.start = True
 ex.par.create = True
+ex.par.frameend = True
 ex.nodeX, ex.nodeY = 400, -150
 
 # Saved without a pairing code: each project that loads the .tox makes its own (start / onCreate).

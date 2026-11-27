@@ -62,8 +62,8 @@ def built(capsys):
 	return types.SimpleNamespace(home=home, old=old, comp=comp, out=capsys.readouterr().out)
 
 
-def page_pars(built):
-	[page] = built.comp.customPages
+def page_pars(built, name='Orrery'):
+	page = next(p for p in built.comp.customPages if p.name == name)
 	return page, {p.name: p for p in page.pars}
 
 
@@ -78,9 +78,23 @@ def test_component_basics(built):
 	assert 'Orrery' in built.comp.comment
 
 
-def test_one_page_called_orrery(built):
-	page, _ = page_pars(built)
-	assert page.name == 'Orrery'
+def test_pages_are_orrery_then_setup(built):
+	assert [p.name for p in built.comp.customPages] == ['Orrery', 'Setup']
+
+
+def test_setup_page(built):
+	page, _ = page_pars(built, 'Setup')
+	assert [(p.name, p.style, p.label) for p in page.pars] == [
+		('Okserver', 'Toggle', 'Server running'),
+		('Okcomps', 'Toggle', 'COMPs next to Orrery'),
+		('Okpage', 'Toggle', 'A Controls page on a COMP'),
+		('Okphone', 'Toggle', 'A phone is paired'),
+		('Nextstep', 'Str', 'Next Step'),
+		('Checksetup', 'Pulse', 'Check Setup'),
+		('Help', 'Pulse', 'Open the Guide'),
+		('Guide', 'Str', 'Guide'),
+	]
+	assert all(p.readOnly for p in page.pars if p.style != 'Pulse')
 
 
 def test_parameters_in_order(built):
@@ -169,13 +183,13 @@ def test_settings_watches_the_component(built):
 	assert st.par.ops.eval() == '..'
 	assert st.par.valuechange.eval() is True and st.par.onpulse.eval() is True
 	watched = st.par.pars.eval().split()
-	_, pars = page_pars(built)
+	pars = {**page_pars(built)[1], **page_pars(built, 'Setup')[1]}
 	assert set(watched) <= set(pars)
-	assert set(watched) == {'Port', 'Root', 'Page', 'Onair', 'Record', 'Newcode', 'Refresh', 'Showqr'}
+	assert set(watched) == {'Port', 'Root', 'Page', 'Onair', 'Record', 'Newcode', 'Refresh', 'Showqr', 'Checksetup', 'Help'}
 
 
 def test_every_pulse_is_handled_by_settings(built):
-	_, pars = page_pars(built)
+	pars = {**page_pars(built)[1], **page_pars(built, 'Setup')[1]}
 	settings_src = (TD_DIR / 'orrery_settings.py').read_text()
 	watched = built.comp.op('settings').par.pars.eval().split()
 	for name, p in pars.items():
@@ -186,6 +200,10 @@ def test_every_pulse_is_handled_by_settings(built):
 def test_start_runs_on_start_and_create(built):
 	ex = built.comp.op('start')
 	assert ex.par.start.eval() is True and ex.par.create.eval() is True
+
+
+def test_start_rechecks_every_frame_end(built):
+	assert built.comp.op('start').par.frameend.eval() is True
 
 
 def test_saved_without_a_code_then_started(built):
