@@ -1,5 +1,5 @@
-# Orrery: control TouchDesigner from a phone.
-# Callbacks DAT of the Web Server DAT `server` inside the Orrery component.
+# TD Remote: control TouchDesigner from a phone.
+# Callbacks DAT of the Web Server DAT `server` inside the TD Remote component.
 #
 # Every COMP next to the component (its Root parameter) that has a custom parameter page named
 # like the component's Page parameter (default "Controls") shows up in the app, and every
@@ -40,9 +40,9 @@ def controls_page(o):
 	return next((p for p in o.customPages if p.name == name), None)
 
 def comps():
-	# A COMP tagged orrery-hide keeps its Controls page (for other tools) but stays off the phone.
-	# One tagged orrery-show is show-wide (sound, playlist…), listed apart from the patches.
-	return [o for o in root().children if controls_page(o) and 'orrery-hide' not in o.tags]
+	# A COMP tagged td-remote-hide keeps its Controls page (for other tools) but stays off the phone.
+	# One tagged td-remote-show is show-wide (sound, playlist…), listed apart from the patches.
+	return [o for o in root().children if controls_page(o) and 'td-remote-hide' not in o.tags]
 
 def find(name):
 	o = root().op(str(name))
@@ -110,19 +110,19 @@ def on_air_now():
 def check_live():
 	# Every phone gets a fresh list when what's on air, or recording, changed since the last list.
 	now = on_air_now()
-	if now != me_comp().fetch('orrery_live', now, storeDefault=True):
+	if now != me_comp().fetch('td_remote_live', now, storeDefault=True):
 		broadcast(listing())
 
 def listing():
 	items = sorted(comps(), key=lambda o: label(o).lower())
 	lp = live_par()
-	me_comp().store('orrery_live', on_air_now())  # what the phones see now
+	me_comp().store('td_remote_live', on_air_now())  # what the phones see now
 	return {
 		'type': 'list',
 		'project': project_name(),
 		'live': live(),
 		'recording': recording(),
-		'patches': [{'op': o.name, 'label': label(o), 'count': len(controls_page(o).pars), 'canLive': can_go_live(lp, o.name), 'show': 'orrery-show' in o.tags} for o in items],
+		'patches': [{'op': o.name, 'label': label(o), 'count': len(controls_page(o).pars), 'canLive': can_go_live(lp, o.name), 'show': 'td-remote-show' in o.tags} for o in items],
 	}
 
 def state(o):
@@ -130,7 +130,7 @@ def state(o):
 
 # Paired phones, by connection id.
 def paired():
-	return me_comp().fetch('orrery_paired', set(), storeDefault=True)
+	return me_comp().fetch('td_remote_paired', set(), storeDefault=True)
 
 def send(server, client, msg):
 	server.webSocketSendText(client, json.dumps(msg))
@@ -191,7 +191,7 @@ def onWebSocketReceiveText(webServerDAT, client, data):
 		elif kind == 'record':
 			rp = record_par()
 			if rp is None:
-				raise ValueError('no recorder set on the Orrery component')
+				raise ValueError('no recorder set on the TD Remote component')
 			rp.val = bool(msg.get('on'))
 			broadcast(listing())
 			return

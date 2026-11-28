@@ -1,26 +1,26 @@
 <p align="center">
-  <a href="https://orrery.pulsarinteractive.ai/">
-    <img src="assets/brand/orrery-card.png" width="720" alt="Orrery: control TouchDesigner from your phone. Free and open source, by Pulsar Interactive.">
+  <a href="https://tdremote.pulsarinteractive.ai/">
+    <img src="assets/brand/td-remote-card.png" width="720" alt="TD Remote: control TouchDesigner from your phone. Free and open source, by Pulsar Interactive.">
   </a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/Pulsar-Interactive/orrery/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Pulsar-Interactive/orrery/ci.yml?branch=master&label=tests&labelColor=111114" alt="Tests"></a>
-  <a href="https://github.com/Pulsar-Interactive/orrery/releases/latest"><img src="https://img.shields.io/github/v/release/Pulsar-Interactive/orrery?label=release&labelColor=111114&color=FFB020" alt="Latest release"></a>
+  <a href="https://github.com/Pulsar-Interactive/td-remote/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Pulsar-Interactive/td-remote/ci.yml?branch=master&label=tests&labelColor=111114" alt="Tests"></a>
+  <a href="https://github.com/Pulsar-Interactive/td-remote/releases/latest"><img src="https://img.shields.io/github/v/release/Pulsar-Interactive/td-remote?label=release&labelColor=111114&color=FFB020" alt="Latest release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-05F9FE?labelColor=111114" alt="MIT license"></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/Pulsar-Interactive/orrery/releases/latest/download/orrery.tox"><b>Download orrery.tox</b></a>
+  <a href="https://github.com/Pulsar-Interactive/td-remote/releases/latest/download/td-remote.tox"><b>Download td-remote.tox</b></a>
   &nbsp;·&nbsp;
-  <a href="https://orrery.pulsarinteractive.ai/">Website</a>
+  <a href="https://tdremote.pulsarinteractive.ai/">Website</a>
   &nbsp;·&nbsp;
   <a href="SETUP.md">Set up with AI</a>
 </p>
 
 **Your TouchDesigner parameters, on your phone.**
 
-Orrery is a free phone remote for TouchDesigner. You don't draw a layout or map OSC addresses.
+TD Remote is a free phone remote for TouchDesigner. You don't draw a layout or map OSC addresses.
 The parameters you already built become sliders, switches and buttons. Hand the phone to a
 client, a VJ or the venue tech, and they can only touch what you chose to show.
 
@@ -32,18 +32,18 @@ internet: scan the code with the camera and the remote opens in the browser.
 
 ## Quick start
 
-1. **Add the component.** [Download `orrery.tox`](https://github.com/Pulsar-Interactive/orrery/releases/latest/download/orrery.tox)
+1. **Add the component.** [Download `td-remote.tox`](https://github.com/Pulsar-Interactive/td-remote/releases/latest/download/td-remote.tox)
    from the latest release and drag it into your project, next to the COMPs you want to control.
 2. **Pick your controls.** On any of those COMPs, add a custom parameter page named
    **Controls** (right-click the COMP › Customize Component…). Put the parameters you want on
    the phone on that page.
-3. **Pair the phone.** Press **Show QR** on the component's **Orrery** page: a window opens
+3. **Pair the phone.** Press **Show QR** on the component's **TD Remote** page: a window opens
    with the QR code. Scan it with the phone's camera. Or open the **Address** in any browser
    and type the 6-digit **Pairing Code**.
 
 That's it. The phone remembers the code, and changes made in TouchDesigner show up on the phone
 right away. Add the page to the home screen to open it like an app: in Safari, Share → **Add to
-Home Screen** (it opens full screen, with the Orrery icon); in Chrome, ⋮ → **Add to Home screen**.
+Home Screen** (it opens full screen, with the TD Remote icon); in Chrome, ⋮ → **Add to Home screen**.
 The app opens the Address it was added from, so if the computer's address changes, add it again
 (or give the computer a fixed address on the router). An app added this way keeps its own
 memory, so it asks for the Pairing Code once.
@@ -75,7 +75,7 @@ each parameter's **Label**, and each COMP's name with `_` as spaces, so give the
 
 ## Settings
 
-All on the component's **Orrery** page:
+All on the component's **TD Remote** page:
 
 | Parameter | Default | What it does |
 |---|---|---|
@@ -106,8 +106,8 @@ All on the component's **Orrery** page:
   networks often block devices from reaching each other. A phone hotspot works.
 - **Firewall?** On macOS, allow TouchDesigner to accept incoming connections.
 - **Address changed?** Press **Refresh Address** (or **Show QR** again) after changing networks.
-- **Too much in the list?** Add the tag `orrery-hide` to a COMP (Common page › Tags) to keep it off the phone.
-- **Show-wide controls mixed in with the patches?** Tag a COMP `orrery-show` (sound input, playlist, autopilot…):
+- **Too much in the list?** Add the tag `td-remote-hide` to a COMP (Common page › Tags) to keep it off the phone.
+- **Show-wide controls mixed in with the patches?** Tag a COMP `td-remote-show` (sound input, playlist, autopilot…):
   it moves to a **SHOW** section at the top of the list, apart from the patches.
 - **Nothing in the list?** The remote only lists COMPs next to the component that have a page named
   exactly **Controls** (or whatever **Page Name** says).
@@ -119,10 +119,10 @@ rest is the component's Python. After changing anything there, rebuild the compo
 TouchDesigner's Textport (any project open):
 
 ```python
-exec(open('/path/to/orrery/td/build.py').read(), dict(globals(), TD_DIR='/path/to/orrery/td'))
+exec(open('/path/to/td-remote/td/build.py').read(), dict(globals(), TD_DIR='/path/to/td-remote/td'))
 ```
 
-It builds `/project1/orrery` and saves `td/orrery.tox`. The protocol is plain JSON over a
+It builds `/project1/td_remote` and saves `td/td-remote.tox`. The protocol is plain JSON over a
 WebSocket, documented in [td/README.md](td/README.md), so you can write your own client.
 
 ### Tests
@@ -141,8 +141,8 @@ must produce and what the remote's tests render, so the two halves can't drift a
 also check that build.py, this README and [td/README.md](td/README.md) still agree.
 
 GitHub Actions runs both suites on every pull request, and fails one that changes what goes into
-the component without committing a rebuilt `td/orrery.tox`. Pushing a tag like `v0.1.0` (on
-master) runs them again and publishes a release with `orrery.tox` attached, which is what the
+the component without committing a rebuilt `td/td-remote.tox`. Pushing a tag like `v0.1.0` (on
+master) runs them again and publishes a release with `td-remote.tox` attached, which is what the
 download link points at.
 
 Issues and pull requests are welcome.
@@ -152,7 +152,7 @@ Issues and pull requests are welcome.
 Free and open source under the [MIT License](LICENSE): use it in personal and commercial work,
 change it, share it.
 
-The license covers the code, not the brand. The name "Orrery", the Orrery icon and the Pulsar
+The license covers the code, not the brand. The name "TD Remote", the TD Remote icon and the Pulsar
 Interactive name and logo are not licensed for reuse: a fork or a published copy needs
 its own name and icon.
 
@@ -168,5 +168,5 @@ its own name and icon.
 </p>
 
 Made by [Pulsar Interactive](https://pulsarinteractive.ai), who build interactive shows and
-installations. TouchDesigner is a trademark of Derivative; Orrery is not affiliated with
+installations. TouchDesigner is a trademark of Derivative; TD Remote is not affiliated with
 Derivative.

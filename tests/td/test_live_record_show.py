@@ -1,5 +1,5 @@
 # GO LIVE and REC (the component's On Air and Record expressions), the SHOW section
-# (orrery-show) and the files the component serves besides the remote (td/web).
+# (td-remote-show) and the files the component serves besides the remote (td/web).
 import base64
 
 import pytest
@@ -25,11 +25,11 @@ def two(world, synth):
 
 
 def on_air(world, expr="op('show_ctl').par.Patch"):
-	world.orrery.par.Onair.express(expr)
+	world.td_remote.par.Onair.express(expr)
 
 
 def recorder(world, expr="op('show_ctl').par.Record"):
-	world.orrery.par.Record.express(expr)
+	world.td_remote.par.Record.express(expr)
 
 
 def patches(world):
@@ -43,7 +43,7 @@ def test_without_on_air_nothing_can_go_live(world, two):
 
 
 def test_on_air_as_a_plain_value_is_shown_but_not_settable(world, two):
-	world.orrery.par.Onair = 'synth'
+	world.td_remote.par.Onair = 'synth'
 	assert world.cb.listing()['live'] == 'synth'
 	assert not any(p['canLive'] for p in patches(world).values())
 
@@ -86,7 +86,7 @@ def test_go_live_without_on_air_is_refused(world, two):
 
 def test_go_live_with_a_hidden_comp_is_refused(world, two, show):
 	on_air(world)
-	world.project.op('my_fx').tags.add('orrery-hide')
+	world.project.op('my_fx').tags.add('td-remote-hide')
 	a = world.pair('a')
 	[err] = world.ask(a, {'type': 'live', 'op': 'my_fx'})
 	assert err == {'type': 'error', 'error': 'nothing to control called my_fx'}
@@ -132,7 +132,7 @@ def test_record_starts_and_stops_and_every_phone_hears(world, two, show):
 def test_record_without_a_recorder_is_refused(world, two):
 	a = world.pair('a')
 	assert world.ask(a, {'type': 'record', 'on': True}) == [
-		{'type': 'error', 'error': 'no recorder set on the Orrery component'}]
+		{'type': 'error', 'error': 'no recorder set on the TD Remote component'}]
 
 
 def test_recorder_must_be_a_toggle(world, two, show):
@@ -179,8 +179,8 @@ def test_first_control_change_sends_no_list(world, two):
 
 # --- SHOW section ----------------------------------------------------------------------------
 
-def test_show_flag_follows_the_orrery_show_tag(world, two):
-	world.project.op('my_fx').tags.add('orrery-show')
+def test_show_flag_follows_the_td_remote_show_tag(world, two):
+	world.project.op('my_fx').tags.add('td-remote-show')
 	p = patches(world)
 	assert p['my_fx']['show'] is True
 	assert p['synth']['show'] is False and p['other']['show'] is False
@@ -188,13 +188,13 @@ def test_show_flag_follows_the_orrery_show_tag(world, two):
 
 def test_hide_wins_over_show(world, two):
 	c = world.project.op('my_fx')
-	c.tags.update({'orrery-show', 'orrery-hide'})
+	c.tags.update({'td-remote-show', 'td-remote-hide'})
 	assert 'my_fx' not in patches(world)
 
 
 def test_a_show_comp_is_controlled_like_any_other(world):
 	sound = add_synth(world, 'sound')
-	sound.tags.add('orrery-show')
+	sound.tags.add('td-remote-show')
 	a = world.pair('a')
 	world.ask(a, {'type': 'set', 'op': 'sound', 'par': 'Cutoff', 'value': 0.9})
 	assert sound.par.Cutoff.eval() == 0.9
@@ -225,7 +225,7 @@ def test_web_files_only_on_get(world):
 	assert r['statusCode'] == 404
 
 
-@pytest.mark.parametrize('uri', ['/../orrery_callbacks.py', '/web/icon.svg', '/assets', '/icon.SVG'])
+@pytest.mark.parametrize('uri', ['/../td_remote_callbacks.py', '/web/icon.svg', '/assets', '/icon.SVG'])
 def test_nothing_outside_the_table_is_served(world, uri):
 	assert world.cb.onHTTPRequest(world.server, {'method': 'GET', 'uri': uri}, {})['statusCode'] == 404
 

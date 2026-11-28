@@ -7,12 +7,12 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Orrery">
+<meta name="apple-mobile-web-app-title" content="TD Remote">
 <link rel="manifest" href="/manifest.webmanifest">
 <link rel="icon" href="/icon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
-<title>Orrery</title>
-<!-- Orrery: the phone remote. The Orrery component serves this page and talks to it over a
+<title>TD Remote</title>
+<!-- TD Remote: the phone remote. The TD Remote component serves this page and talks to it over a
      WebSocket on the same address. One file, no build step. It must load from TouchDesigner alone,
      on venue networks with no internet: Space Grotesk (the labels) is embedded, and body text uses
      Inter where installed, else the system font. Same look as the landing page: amber for values
@@ -118,13 +118,13 @@ body.offline .transport { opacity: .35; pointer-events: none; }
 </style>
 </head>
 <body>
-<div id="splash" role="status" aria-label="Loading Orrery">
+<div id="splash" role="status" aria-label="Loading TD Remote">
   <img src="/pulsar.svg" alt="Pulsar Interactive" width="200" height="55">
   <span class="scan" aria-hidden="true"></span>
-  <span class="splash-label">ORRERY</span>
+  <span class="splash-label">TD REMOTE</span>
 </div>
 <header>
-  <span class="brand"><svg width="18" height="18" viewBox="-6 -6 112 112" fill="none" aria-hidden="true"><circle cx="45" cy="55" r="31" fill="#FFFFFF"/><circle cx="75" cy="26" r="13" fill="#FFFFFF" stroke="#111114" stroke-width="7"/></svg><span class="word">ORRERY</span></span>
+  <span class="brand"><svg width="18" height="18" viewBox="-6 -6 112 112" fill="none" aria-hidden="true"><circle cx="45" cy="55" r="31" fill="#FFFFFF"/><circle cx="75" cy="26" r="13" fill="#FFFFFF" stroke="#111114" stroke-width="7"/></svg><span class="word">TD REMOTE</span></span>
   <span id="status" class="dot">CONNECTING</span>
   <div id="transport" class="transport" hidden>
     <button id="play" class="play"></button>
@@ -133,12 +133,12 @@ body.offline .transport { opacity: .35; pointer-events: none; }
   <p id="banner" class="banner" role="alert" hidden>Not connected to TouchDesigner. Retrying…</p>
 </header>
 <main id="main"></main>
-<p class="footer"><a href="https://github.com/Pulsar-Interactive/orrery" target="_blank" rel="noopener">Orrery · free and open source · Pulsar Interactive</a></p>
+<p class="footer"><a href="https://github.com/Pulsar-Interactive/td-remote" target="_blank" rel="noopener">TD Remote · free and open source · Pulsar Interactive</a></p>
 <div id="toast" role="status" aria-live="polite" hidden></div>
 
 <script>
 'use strict';
-const KEY = 'orrery-code';
+const KEY = 'td-remote-code';
 const main = document.getElementById('main');
 const statusEl = document.getElementById('status');
 const banner = document.getElementById('banner');
@@ -216,7 +216,7 @@ function connect() {
     const msg = JSON.parse(e.data);
     if (msg.type === 'denied') {
       code = null; store.set(null); ws.onclose = null; ws.close();
-      return showPair('That code was not accepted. Enter the Pairing Code shown on the Orrery component.');
+      return showPair('That code was not accepted. Enter the Pairing Code shown on the TD Remote component.');
     }
     if (msg.type === 'list') {
       project = msg.project; live = msg.live || ''; recording = msg.recording ?? null; patches = msg.patches;
@@ -259,7 +259,7 @@ function showPair(error) {
   input.addEventListener('keydown', (e) => { if (e.key === 'Enter') submit(); });
   main.replaceChildren(el('div', { class: 'card' },
     el('h1', {}, 'Pair this phone'),
-    error ? el('p', { class: 'hint error' }, error) : el('p', { class: 'hint' }, 'Enter the Pairing Code shown on the Orrery component in TouchDesigner, or scan its QR code.'),
+    error ? el('p', { class: 'hint error' }, error) : el('p', { class: 'hint' }, 'Enter the Pairing Code shown on the TD Remote component in TouchDesigner, or scan its QR code.'),
     input, go));
   input.focus();
 }
@@ -267,7 +267,7 @@ function showPair(error) {
 function showList() {
   panel = null;
   transport.hidden = true;
-  // COMPs tagged orrery-show (sound, playlist…) get their own SHOW section above the patches.
+  // COMPs tagged td-remote-show (sound, playlist…) get their own SHOW section above the patches.
   const item = (p) => el('button', { class: p.op === live ? 'live' : '', onclick: () => open(p.op) },
     p.show ? null : el('span', { class: 'pip', 'aria-hidden': 'true' }),
     el('span', { class: 'name' },
@@ -279,10 +279,10 @@ function showList() {
     ? [el('div', { class: 'group' }, 'SHOW'), el('div', { class: 'list' }, ...show.map(item)),
        rest.length ? el('div', { class: 'group' }, 'PATCHES') : null, rest.length ? el('div', { class: 'list' }, ...rest.map(item)) : null]
     : [el('div', { class: 'list' }, ...rest.map(item))];
-  // (no section labels when nothing is tagged orrery-show)
+  // (no section labels when nothing is tagged td-remote-show)
   main.replaceChildren(
     el('div', { class: 'title' }, el('h1', {}, project || 'Controls'), patches.length ? el('p', { class: 'hint' }, 'Choose what to control') : null),
-    ...(patches.length ? sections.filter(Boolean) : [el('div', { class: 'card' }, el('p', { class: 'hint' }, 'Nothing to control yet. In TouchDesigner, add a custom parameter page named Controls to a COMP next to the Orrery component.'))]));
+    ...(patches.length ? sections.filter(Boolean) : [el('div', { class: 'card' }, el('p', { class: 'hint' }, 'Nothing to control yet. In TouchDesigner, add a custom parameter page named Controls to a COMP next to the TD Remote component.'))]));
 }
 
 function open(op) {

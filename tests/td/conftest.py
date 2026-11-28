@@ -16,7 +16,7 @@ def world():
 
 
 def add_synth(world, name='synth', parent=None):
-	"""A COMP with one of every parameter style Orrery knows, in the order of fixtures/synth_state.json."""
+	"""A COMP with one of every parameter style TD Remote knows, in the order of fixtures/synth_state.json."""
 	c = world.comp(name, parent)
 	pg = c.page('Controls')
 	pg.add('Tone', 'Header', label='Tone', startSection=True)

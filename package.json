@@ -1,7 +1,7 @@
 {
-  "name": "orrery-tests",
+  "name": "td-remote-tests",
   "private": true,
-  "description": "Tests for the Orrery phone remote (td/remote.html).",
+  "description": "Tests for the TD Remote phone remote (td/remote.html).",
   "type": "module",
   "scripts": {
     "test": "node --test tests/remote/*.test.js"

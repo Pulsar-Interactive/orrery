@@ -1,4 +1,4 @@
-# Parameter Execute DAT `parexec` inside the Orrery component, watching every COMP under Root.
+# Parameter Execute DAT `parexec` inside the TD Remote component, watching every COMP under Root.
 # Sends a fresh state to every paired phone when a control changes, from the phone or in TouchDesigner,
 # and a fresh list when that change moved what's on air (the component's On Air parameter).
 def onValueChange(par, prev):
