@@ -37,7 +37,7 @@ test('the remote is set up for phones', () => {
 test('the only outside link is the project page, opened safely', () => {
   const links = [...REMOTE.matchAll(/<a [^>]*>/g)].map((m) => m[0]);
   assert.equal(links.length, 1);
-  assert.match(links[0], /href="https:\/\/github\.com\/Pulsar-Interactive\/td-remote"/);
+  assert.match(links[0], /href="https:\/\/github\.com\/Pulsar-Interactive\/tdremote"/);
   assert.match(links[0], /rel="noopener"/);
 });
 
