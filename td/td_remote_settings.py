@@ -1,8 +1,8 @@
-# Parameter Execute DAT `settings` inside the Orrery component, watching the component itself.
+# Parameter Execute DAT `settings` inside the TD Remote component, watching the component itself.
 import random
 
 # The explanation the Help button opens: the landing page's How it works section.
-HELP_URL = 'https://orrery.pulsarinteractive.ai/#how'
+HELP_URL = 'https://tdremote.pulsarinteractive.ai/#how'
 
 def new_code(comp):
 	comp.par.Code = '%06d' % random.SystemRandom().randrange(1000000)
@@ -16,7 +16,7 @@ def check_setup(comp):
 	shown = m.comps()
 	checks = [
 		('Okserver', bool(op('server').par.active.eval()), 'Turn Active on, so a phone can reach this component.'),
-		('Okcomps', bool(neighbours), 'Put a COMP next to Orrery, or point Controls In at the network that has your COMPs.'),
+		('Okcomps', bool(neighbours), 'Put a COMP next to TD Remote, or point Controls In at the network that has your COMPs.'),
 		('Okpage', bool(shown), 'Add a custom parameter page named %s, with a parameter on it, to a COMP (right-click it, Customize Component).' % page),
 		('Okphone', comp.par.Phones.eval() > 0, 'Press Show QR and scan it with a phone.'),
 	]

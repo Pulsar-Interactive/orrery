@@ -1,4 +1,4 @@
-# orrery_qr.py (the QR encoder) and orrery_qrtop.py (the Script TOP that draws it). Every code is
+# td_remote_qr.py (the QR encoder) and td_remote_qrtop.py (the Script TOP that draws it). Every code is
 # decoded back with zxing-cpp, an independent reader, so "it scans" is what is tested.
 import numpy
 import pytest
@@ -6,7 +6,7 @@ import zxingcpp
 
 from tdfake import load_module, COMP
 
-QR = load_module('orrery_qr.py', COMP('orrery'))
+QR = load_module('td_remote_qr.py', COMP('td_remote'))
 
 
 def image(m, cell=4, quiet=4):
@@ -80,7 +80,7 @@ def test_every_mask_scans(mask):
 
 
 def test_utf8_text_scans():
-	text = 'http://orrery.local:9980/?code=123456&n=Señal ✦'
+	text = 'http://td_remote.local:9980/?code=123456&n=Señal ✦'
 	assert decode(image(QR.matrix(text))) == text
 
 
@@ -122,21 +122,21 @@ def top_image(world):
 
 
 def test_qrtop_draws_the_pairing_address(world):
-	world.orrery.par.Address = 'http://192.168.1.20:9980'
+	world.td_remote.par.Address = 'http://192.168.1.20:9980'
 	img = top_image(world)
 	gray = img[::-1, :, 0]  # TouchDesigner rows start at the bottom: flip back to read it
 	assert decode(numpy.ascontiguousarray(gray)) == 'http://192.168.1.20:9980/?code=123456'
 
 
 def test_qrtop_follows_a_new_code(world):
-	world.orrery.par.Address = 'http://192.168.1.20:9980'
-	world.orrery.par.Code = '654321'
+	world.td_remote.par.Address = 'http://192.168.1.20:9980'
+	world.td_remote.par.Code = '654321'
 	gray = numpy.ascontiguousarray(top_image(world)[::-1, :, 0])
 	assert decode(gray) == 'http://192.168.1.20:9980/?code=654321'
 
 
 def test_qrtop_is_opaque_with_a_white_quiet_zone(world):
-	world.orrery.par.Address = 'http://192.168.1.20:9980'
+	world.td_remote.par.Address = 'http://192.168.1.20:9980'
 	img = top_image(world)
 	assert (img[:, :, 3] == 255).all()
 	cell = 12
@@ -146,7 +146,7 @@ def test_qrtop_is_opaque_with_a_white_quiet_zone(world):
 
 
 def test_qrtop_size_is_modules_plus_quiet_zone_times_12(world):
-	world.orrery.par.Address = 'http://192.168.1.20:9980'
+	world.td_remote.par.Address = 'http://192.168.1.20:9980'
 	img = top_image(world)
 	n = len(world.qr.matrix('http://192.168.1.20:9980/?code=123456')) + 8
 	assert img.shape[:2] == (n * 12, n * 12)
@@ -154,7 +154,7 @@ def test_qrtop_size_is_modules_plus_quiet_zone_times_12(world):
 
 @pytest.mark.parametrize('address,code', [('', '123456'), ('http://192.168.1.20:9980', '')])
 def test_qrtop_is_blank_until_there_is_an_address_and_a_code(world, address, code):
-	world.orrery.par.Address = address
-	world.orrery.par.Code = code
+	world.td_remote.par.Address = address
+	world.td_remote.par.Code = code
 	img = top_image(world)
 	assert (img[:, :, :3] == 255).all()

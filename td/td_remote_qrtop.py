@@ -1,4 +1,4 @@
-# Callbacks for the Script TOP `qrtop` inside the Orrery component: draws the pairing QR (the
+# Callbacks for the Script TOP `qrtop` inside the TD Remote component: draws the pairing QR (the
 # address with the code in it) using the `qr` encoder, black on white with a quiet zone, so any
 # camera can scan it off this screen. Show QR opens it in a viewer window.
 import numpy

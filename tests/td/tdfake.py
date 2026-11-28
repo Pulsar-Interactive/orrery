@@ -1,4 +1,4 @@
-# A small fake of the parts of TouchDesigner the Orrery scripts use, so they can run under pytest.
+# A small fake of the parts of TouchDesigner the TD Remote scripts use, so they can run under pytest.
 # Only what td/*.py touches is modelled: COMPs with custom pages and parameters (constant or
 # expression), DATs with a `module`, Table DATs, the Script TOP that draws the QR, the Web Server
 # DAT's send/close calls, `parent()`, `op()`, `project`, `ParMode` and `td.Par`.
@@ -286,7 +286,7 @@ class WebServer(DAT):
 
 
 def load_module(filename, me, project_name='show.toe', extra=None):
-	"""Runs td/<filename> like a DAT inside `me` (the Orrery component) and returns its module."""
+	"""Runs td/<filename> like a DAT inside `me` (the TD Remote component) and returns its module."""
 	mod = types.ModuleType(filename.replace('.py', ''))
 	mod.__dict__.update({
 		'parent': lambda: me,
@@ -303,13 +303,13 @@ def load_module(filename, me, project_name='show.toe', extra=None):
 
 
 class World:
-	"""/project1 with an Orrery component inside it, wired like build.py wires it."""
+	"""/project1 with an TD Remote component inside it, wired like build.py wires it."""
 
 	def __init__(self, project_name='show.toe'):
 		self.top = COMP('')
 		self.project = COMP('project1', self.top)
-		self.orrery = o = COMP('orrery', self.project)
-		page = o.page('Orrery')
+		self.td_remote = o = COMP('td_remote', self.project)
+		page = o.page('TD Remote')
 		page.add('Active', 'Toggle', value=True, default=True)
 		page.add('Showqr', 'Pulse')
 		page.add('Address', 'Str', value='', readOnly=True)
@@ -342,9 +342,9 @@ class World:
 		self.qrtop = ScriptTOP('qrtop', o)
 		self.parexec_dat = DAT('parexec', o)
 		self.parexec_dat.par.ops.val = ''
-		for name, filename in (('callbacks', 'orrery_callbacks.py'), ('settings', 'orrery_settings.py'),
-				('parexec', 'orrery_parexec.py'), ('start', 'orrery_start.py'), ('qr', 'orrery_qr.py'),
-				('qrtop_callbacks', 'orrery_qrtop.py')):
+		for name, filename in (('callbacks', 'td_remote_callbacks.py'), ('settings', 'td_remote_settings.py'),
+				('parexec', 'td_remote_parexec.py'), ('start', 'td_remote_start.py'), ('qr', 'td_remote_qr.py'),
+				('qrtop_callbacks', 'td_remote_qrtop.py')):
 			dat = o.op(name) or DAT(name, o)
 			dat.module = load_module(filename, o, project_name, extra={'ui': self.ui})
 		self.cb = o.op('callbacks').module
@@ -355,7 +355,7 @@ class World:
 
 	def draw_qr(self):
 		"""Cooks the QR Script TOP the way TouchDesigner would and returns its image."""
-		self.orrery.op('qrtop_callbacks').module.onCook(self.qrtop)
+		self.td_remote.op('qrtop_callbacks').module.onCook(self.qrtop)
 		return self.qrtop.image
 
 	def comp(self, name, parent=None, page='Controls'):
@@ -366,7 +366,7 @@ class World:
 		return c
 
 	def pair(self, client='phone1', code=None):
-		self.cb.onWebSocketOpen(self.server, client, '/?code=%s' % (code or self.orrery.par.Code.eval()))
+		self.cb.onWebSocketOpen(self.server, client, '/?code=%s' % (code or self.td_remote.par.Code.eval()))
 		return client
 
 	def ask(self, client, msg):

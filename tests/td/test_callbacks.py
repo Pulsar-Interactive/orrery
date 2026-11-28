@@ -1,4 +1,4 @@
-# orrery_callbacks.py: discovery, describing parameters, pairing, the WebSocket protocol, HTTP.
+# td_remote_callbacks.py: discovery, describing parameters, pairing, the WebSocket protocol, HTTP.
 import json
 
 import pytest
@@ -17,18 +17,18 @@ def test_lists_only_comps_with_a_controls_page(world, synth):
 
 
 def test_never_lists_itself(world):
-	world.orrery.page('Controls').add('Sneaky', 'Float', value=0)
+	world.td_remote.page('Controls').add('Sneaky', 'Float', value=0)
 	assert world.cb.comps() == []
 
 
 def test_page_name_follows_the_page_parameter(world, synth):
 	world.comp('setup_only', page='Setup')
-	world.orrery.par.Page = 'Setup'
+	world.td_remote.par.Page = 'Setup'
 	assert [o.name for o in world.cb.comps()] == ['setup_only']
 
 
 def test_empty_page_name_falls_back_to_controls(world, synth):
-	world.orrery.par.Page = ''
+	world.td_remote.par.Page = ''
 	assert world.cb.page_name() == 'Controls'
 	assert [o.name for o in world.cb.comps()] == ['synth']
 
@@ -40,7 +40,7 @@ def test_root_defaults_to_the_components_parent(world):
 def test_root_parameter_moves_discovery(world, synth):
 	rack = COMP('rack', world.project)
 	add_synth(world, 'inner', parent=rack)
-	world.orrery.par.Root = rack
+	world.td_remote.par.Root = rack
 	assert [o.name for o in world.cb.comps()] == ['inner']
 
 
@@ -60,7 +60,7 @@ def test_find_returns_a_controllable_comp(world, synth):
 	assert world.cb.find('synth') is synth
 
 
-@pytest.mark.parametrize('name', ['missing', '', None, 'orrery', 'server', 'callbacks', 'synth/deep',
+@pytest.mark.parametrize('name', ['missing', '', None, 'td_remote', 'server', 'callbacks', 'synth/deep',
 	'/project1/synth/deep', '../project1', '..', '.', '/', '/project1'])
 def test_find_rejects_anything_else(world, synth, name):
 	add_synth(world, 'deep', parent=synth)
@@ -82,7 +82,7 @@ def test_find_rejects_a_comp_without_the_page(world):
 
 def test_find_rejects_comps_outside_root(world, synth):
 	rack = COMP('rack', world.project)
-	world.orrery.par.Root = rack
+	world.td_remote.par.Root = rack
 	with pytest.raises(ValueError):
 		world.cb.find('synth')
 
@@ -170,19 +170,19 @@ def test_listing_is_sorted_by_label_ignoring_case(world):
 
 
 def test_listing_live_is_the_on_air_value(world, synth):
-	world.orrery.par.Onair = 'synth'
+	world.td_remote.par.Onair = 'synth'
 	assert world.cb.listing()['live'] == 'synth'
 
 
 def test_hidden_comp_is_left_out_of_the_list(world, synth):
-	world.comp('secret').tags.add('orrery-hide')
+	world.comp('secret').tags.add('td-remote-hide')
 	assert [p['op'] for p in world.cb.listing()['patches']] == ['synth']
 
 
 def test_hidden_comp_cannot_be_read_or_changed(world):
 	c = world.comp('secret')
 	c.page('Controls').add('Mix', 'Float', value=0.5)
-	c.tags.add('orrery-hide')
+	c.tags.add('td-remote-hide')
 	phone = world.pair()
 	nope = [{'type': 'error', 'error': 'nothing to control called secret'}]
 	assert world.ask(phone, {'type': 'get', 'op': 'secret'}) == nope
@@ -206,7 +206,7 @@ def test_listing_project_name_drops_toe_and_save_number(toe, name):
 def test_right_code_pairs(world):
 	world.pair('a')
 	assert 'a' in world.cb.paired()
-	assert world.orrery.par.Phones.eval() == 1
+	assert world.td_remote.par.Phones.eval() == 1
 	assert world.server.sent == [] and world.server.closed == []
 
 
@@ -217,11 +217,11 @@ def test_wrong_code_is_denied_and_closed(world, uri):
 	assert world.server.sent == [('x', {'type': 'denied'})]
 	assert world.server.closed == ['x']
 	assert 'x' not in world.cb.paired()
-	assert world.orrery.par.Phones.eval() == 0
+	assert world.td_remote.par.Phones.eval() == 0
 
 
 def test_empty_component_code_pairs_nobody(world):
-	world.orrery.par.Code = ''
+	world.td_remote.par.Code = ''
 	world.cb.onWebSocketOpen(world.server, 'x', '/?code=')
 	assert 'x' not in world.cb.paired()
 
@@ -251,26 +251,26 @@ def test_close_unpairs(world):
 	world.pair('b')
 	world.cb.onWebSocketClose(world.server, 'a')
 	assert world.cb.paired() == {'b'}
-	assert world.orrery.par.Phones.eval() == 1
+	assert world.td_remote.par.Phones.eval() == 1
 
 
 def test_close_of_unknown_client_is_harmless(world):
 	world.cb.onWebSocketClose(world.server, 'ghost')
-	assert world.orrery.par.Phones.eval() == 0
+	assert world.td_remote.par.Phones.eval() == 0
 
 
 def test_server_start_and_stop_forget_phones(world):
 	world.pair('a')
 	world.cb.onServerStop(world.server)
-	assert world.cb.paired() == set() and world.orrery.par.Phones.eval() == 0
+	assert world.cb.paired() == set() and world.td_remote.par.Phones.eval() == 0
 	world.pair('b')
 	world.cb.onServerStart(world.server)
-	assert world.cb.paired() == set() and world.orrery.par.Phones.eval() == 0
+	assert world.cb.paired() == set() and world.td_remote.par.Phones.eval() == 0
 
 
 def test_paired_set_lives_in_component_storage(world):
 	world.pair('a')
-	assert world.orrery.storage['orrery_paired'] == {'a'}
+	assert world.td_remote.storage['td_remote_paired'] == {'a'}
 
 
 # --- messages ------------------------------------------------------------------------------
@@ -341,7 +341,7 @@ def test_set_parameter_not_on_the_page_is_refused(world, synth):
 
 
 def test_set_on_another_page_name_is_refused(world, synth):
-	world.orrery.par.Page = 'Setup'
+	world.td_remote.par.Page = 'Setup'
 	c = world.pair()
 	[reply] = world.ask(c, {'type': 'set', 'op': 'synth', 'par': 'Cutoff', 'value': 1})
 	assert reply['type'] == 'error'
@@ -350,9 +350,9 @@ def test_set_on_another_page_name_is_refused(world, synth):
 
 def test_set_on_the_component_itself_is_refused(world):
 	c = world.pair()
-	[reply] = world.ask(c, {'type': 'set', 'op': 'orrery', 'par': 'Code', 'value': '000000'})
+	[reply] = world.ask(c, {'type': 'set', 'op': 'td_remote', 'par': 'Code', 'value': '000000'})
 	assert reply['type'] == 'error'
-	assert world.orrery.par.Code.eval() == '123456'
+	assert world.td_remote.par.Code.eval() == '123456'
 
 
 def test_set_unknown_parameter_is_refused(world, synth):
@@ -428,14 +428,14 @@ def test_serves_the_remote(world, uri):
 	assert r['Content-Type'] == 'text/html; charset=utf-8'
 	assert r['Cache-Control'] == 'no-store'
 	assert r['data'] == world.remote.text
-	assert '<title>Orrery</title>' in r['data']
+	assert '<title>TD Remote</title>' in r['data']
 
 
 def test_request_without_method_or_uri_defaults_to_get_root(world):
 	assert world.cb.onHTTPRequest(world.server, {}, {})['statusCode'] == 200
 
 
-@pytest.mark.parametrize('uri', ['/pair.html', '/orrery_callbacks.py', '/../td/build.py', '/favicon.ico',
+@pytest.mark.parametrize('uri', ['/pair.html', '/td_remote_callbacks.py', '/../td/build.py', '/favicon.ico',
 	'/index.htm', '//', '/remote'])
 def test_everything_else_is_404(world, uri):
 	r = world.cb.onHTTPRequest(world.server, {'method': 'GET', 'uri': uri}, {})
@@ -455,7 +455,7 @@ def test_pair_page_is_never_served(world):
 
 def test_served_page_does_not_contain_the_code(world):
 	r = world.cb.onHTTPRequest(world.server, {'uri': '/'}, {})
-	assert world.orrery.par.Code.eval() not in r['data']
+	assert world.td_remote.par.Code.eval() not in r['data']
 
 
 # --- address -------------------------------------------------------------------------------
@@ -479,7 +479,7 @@ class FakeSocket:
 def test_address_uses_lan_ip_and_port(world, monkeypatch):
 	s = FakeSocket('192.168.1.20')
 	monkeypatch.setattr(world.cb.socket, 'socket', lambda *a: s)
-	world.orrery.par.Port = 9990
+	world.td_remote.par.Port = 9990
 	assert world.cb.address() == 'http://192.168.1.20:9990'
 	assert s.closed and s.connected == ('10.255.255.255', 1)
 
@@ -493,5 +493,5 @@ def test_address_falls_back_to_localhost(world, monkeypatch):
 
 def test_address_casts_port_to_int(world, monkeypatch):
 	monkeypatch.setattr(world.cb.socket, 'socket', lambda *a: FakeSocket('10.0.0.2'))
-	world.orrery.par.Port = 9981.0
+	world.td_remote.par.Port = 9981.0
 	assert world.cb.address() == 'http://10.0.0.2:9981'

@@ -1,6 +1,6 @@
 {
-  "name": "Orrery",
-  "short_name": "Orrery",
+  "name": "TD Remote",
+  "short_name": "TD Remote",
   "description": "A phone remote for your TouchDesigner project",
   "start_url": "/",
   "scope": "/",

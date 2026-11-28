@@ -105,7 +105,7 @@ test('going back to the list hides the bar', () => {
 
 // --- SHOW section ----------------------------------------------------------------------------
 
-test('nothing tagged orrery-show: one list, no section labels', () => {
+test('nothing tagged td-remote-show: one list, no section labels', () => {
   const r = load({ stored: '123456' });
   r.live(list());
   assert.equal(r.$$('.list').length, 1);

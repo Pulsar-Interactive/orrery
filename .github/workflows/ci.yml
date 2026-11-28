@@ -42,9 +42,9 @@ jobs:
       - run: npm test
 
   tox:
-    # td/orrery.tox is built in TouchDesigner (td/build.py), which CI can't run. So a pull request
+    # td/td-remote.tox is built in TouchDesigner (td/build.py), which CI can't run. So a pull request
     # that changes what goes into it must also commit the rebuilt .tox, or the download is stale.
-    name: orrery.tox rebuilt
+    name: td-remote.tox rebuilt
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     steps:
@@ -57,11 +57,11 @@ jobs:
           HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
           changed=$(git diff --name-only "$BASE" "$HEAD")
-          sources=$(echo "$changed" | grep -E '^td/(orrery_[a-z_]+\.py|remote\.html|build\.py|web/)' || true)
-          if [ -n "$sources" ] && ! echo "$changed" | grep -qx 'td/orrery.tox'; then
-            echo "::error file=td/orrery.tox::These go into orrery.tox but it was not rebuilt:"
+          sources=$(echo "$changed" | grep -E '^td/(td_remote_[a-z_]+\.py|remote\.html|build\.py|web/)' || true)
+          if [ -n "$sources" ] && ! echo "$changed" | grep -qx 'td/td-remote.tox'; then
+            echo "::error file=td/td-remote.tox::These go into td-remote.tox but it was not rebuilt:"
             echo "$sources"
-            echo "Run td/build.py in TouchDesigner (see the comment at its top) and commit td/orrery.tox."
+            echo "Run td/build.py in TouchDesigner (see the comment at its top) and commit td/td-remote.tox."
             exit 1
           fi
           echo "ok"

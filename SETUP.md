@@ -1,7 +1,7 @@
-# Orrery setup guide (for AI assistants)
+# TD Remote setup guide (for AI assistants)
 
-You are helping someone set up **Orrery**, a free, open-source (MIT) remote for TouchDesigner.
-A component, `orrery.tox`, serves a web page that turns the parameters on a COMP's **Controls**
+You are helping someone set up **TD Remote**, a free, open-source (MIT) remote for TouchDesigner.
+A component, `td-remote.tox`, serves a web page that turns the parameters on a COMP's **Controls**
 page into sliders, switches and buttons. Any phone, tablet or laptop on the same network opens
 it in its browser. There is no app and no account.
 
@@ -10,7 +10,7 @@ may know TouchDesigner well or barely.
 
 ## 1. Add the component
 
-1. Download [orrery.tox](https://github.com/Pulsar-Interactive/orrery/releases/latest/download/orrery.tox).
+1. Download [td-remote.tox](https://github.com/Pulsar-Interactive/td-remote/releases/latest/download/td-remote.tox).
 2. Drag it into the network **next to** the COMPs they want to control (same parent). The
    component lists the COMPs beside it; change its **Controls In** parameter to point elsewhere.
 
@@ -44,7 +44,7 @@ Rules you must follow when filling it in:
 - The target is `'operator/parameter'`, relative to the COMP.
 
 ```python
-# Orrery: build the Controls page on one COMP. Edit COMP and CONTROLS, then paste in the Textport
+# TD Remote: build the Controls page on one COMP. Edit COMP and CONTROLS, then paste in the Textport
 # (Dialogs › Textport and DATs) and press Enter.
 COMP = op('/project1/synth')
 CONTROLS = [
@@ -97,11 +97,11 @@ for name, label, kind, target, extra in CONTROLS:
 	t.mode = ParMode.BIND
 
 # pulses can't be bound: a Parameter Execute DAT inside the COMP passes each one on
-pe = COMP.op('orrery_pulses')
+pe = COMP.op('td_remote_pulses')
 if pe:
 	pe.destroy()
 if pulses:
-	pe = COMP.create(parameterexecuteDAT, 'orrery_pulses')
+	pe = COMP.create(parameterexecuteDAT, 'td_remote_pulses')
 	(pe.par.ops if hasattr(pe.par, 'ops') else pe.par.op).val = COMP.path
 	pe.par.pars = ' '.join(n for n, _ in pulses)
 	pe.par.valuechange, pe.par.onpulse = False, True
@@ -117,7 +117,7 @@ parameter name, or a custom parameter name that breaks the rule above.
 
 ## 4. Pair a device
 
-1. Select the Orrery component and open its **Orrery** parameter page.
+1. Select the TD Remote component and open its **TD Remote** parameter page.
 2. Press **Show QR**. A window opens with a QR code (drawn by the component, no internet needed).
 3. Scan it with the phone's camera and open the link. The remote opens in the browser and
    remembers the pairing.
@@ -138,9 +138,9 @@ Go through these in order:
 4. **Port taken?** Change **Port** (default 9980) and pair again.
 5. **Nothing in the list?** Only COMPs next to the component (or in **Controls In**) with a page
    named exactly **Controls** (or whatever **Page Name** says) are listed.
-6. **Too much in the list?** Add the tag `orrery-hide` to a COMP (Common page › Tags).
+6. **Too much in the list?** Add the tag `td-remote-hide` to a COMP (Common page › Tags).
 7. **A control doesn't move the real parameter?** Check that the target parameter shows a bind
    or expression to the Controls parameter (a purple or blue field), and that nothing else
    overrides it, such as an export from a CHOP.
 
-More detail: the [README](https://github.com/Pulsar-Interactive/orrery#readme).
+More detail: the [README](https://github.com/Pulsar-Interactive/td-remote#readme).

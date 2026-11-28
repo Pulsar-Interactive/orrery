@@ -1,4 +1,4 @@
-# Execute DAT `start` inside the Orrery component: fills in the address and a first pairing code,
+# Execute DAT `start` inside the TD Remote component: fills in the address and a first pairing code,
 # and re-checks the Setup page once a second.
 def onStart():
 	comp = parent()

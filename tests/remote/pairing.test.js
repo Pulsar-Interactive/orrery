@@ -9,7 +9,7 @@ test('without a code it asks for one and opens no socket', () => {
   assert.equal(r.title(), 'Pair this phone');
   assert.ok(r.$('#code'));
   assert.equal(r.$('#status').hidden, true);
-  assert.match(r.text('.hint'), /Pairing Code shown on the Orrery component/);
+  assert.match(r.text('.hint'), /Pairing Code shown on the TD Remote component/);
 });
 
 test('the code field takes digits only and Connect waits for six', () => {
@@ -40,7 +40,7 @@ test('Connect saves the code and opens the socket with it', () => {
   const r = load();
   r.type(r.$('#code'), '042137');
   r.button('CONNECT').click();
-  assert.equal(r.window.localStorage.getItem('orrery-code'), '042137');
+  assert.equal(r.window.localStorage.getItem('td-remote-code'), '042137');
   assert.equal(r.sockets.length, 1);
   assert.equal(r.ws().url, 'ws://192.168.1.20:9980/?code=042137');
   assert.equal(r.$('#status').hidden, false);
@@ -60,12 +60,12 @@ test('Enter with a short code does nothing', () => {
   r.type(input, '123');
   input.dispatchEvent(new r.window.KeyboardEvent('keydown', { key: 'Enter' }));
   assert.equal(r.sockets.length, 0);
-  assert.equal(r.window.localStorage.getItem('orrery-code'), null);
+  assert.equal(r.window.localStorage.getItem('td-remote-code'), null);
 });
 
 test('a code from the QR is saved, used, and dropped from the address bar', () => {
   const r = load({ url: 'http://10.0.0.5:9980/?code=555111' });
-  assert.equal(r.window.localStorage.getItem('orrery-code'), '555111');
+  assert.equal(r.window.localStorage.getItem('td-remote-code'), '555111');
   assert.equal(r.window.location.search, '');
   assert.equal(r.window.location.pathname, '/');
   assert.equal(r.ws().url, 'ws://10.0.0.5:9980/?code=555111');
@@ -73,7 +73,7 @@ test('a code from the QR is saved, used, and dropped from the address bar', () =
 
 test('a QR code replaces a saved one', () => {
   const r = load({ url: 'http://10.0.0.5:9980/?code=222222', stored: '111111' });
-  assert.equal(r.window.localStorage.getItem('orrery-code'), '222222');
+  assert.equal(r.window.localStorage.getItem('td-remote-code'), '222222');
   assert.match(r.ws().url, /code=222222$/);
 });
 
@@ -98,7 +98,7 @@ test('a refused code is forgotten and the phone asks again, without reconnecting
   const s = r.ws();
   s.accept().receive({ type: 'denied' });
   assert.equal(s.closed, true);
-  assert.equal(r.window.localStorage.getItem('orrery-code'), null);
+  assert.equal(r.window.localStorage.getItem('td-remote-code'), null);
   assert.equal(r.title(), 'Pair this phone');
   assert.match(r.text('.hint.error'), /not accepted/);
   r.advance(10_000);
