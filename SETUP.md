@@ -10,7 +10,7 @@ may know TouchDesigner well or barely.
 
 ## 1. Add the component
 
-1. Download [td-remote.tox](https://github.com/Pulsar-Interactive/td-remote/releases/latest/download/td-remote.tox).
+1. Download [td-remote.tox](https://github.com/Pulsar-Interactive/tdremote/releases/latest/download/td-remote.tox).
 2. Drag it into the network **next to** the COMPs they want to control (same parent). The
    component lists the COMPs beside it; change its **Controls In** parameter to point elsewhere.
 
@@ -143,4 +143,4 @@ Go through these in order:
    or expression to the Controls parameter (a purple or blue field), and that nothing else
    overrides it, such as an export from a CHOP.
 
-More detail: the [README](https://github.com/Pulsar-Interactive/td-remote#readme).
+More detail: the [README](https://github.com/Pulsar-Interactive/tdremote#readme).

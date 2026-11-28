@@ -5,13 +5,13 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Pulsar-Interactive/td-remote/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Pulsar-Interactive/td-remote/ci.yml?branch=master&label=tests&labelColor=111114" alt="Tests"></a>
-  <a href="https://github.com/Pulsar-Interactive/td-remote/releases/latest"><img src="https://img.shields.io/github/v/release/Pulsar-Interactive/td-remote?label=release&labelColor=111114&color=FFB020" alt="Latest release"></a>
+  <a href="https://github.com/Pulsar-Interactive/tdremote/actions/workflows/ci.yml"><img src="https://img.shields.io/github/actions/workflow/status/Pulsar-Interactive/tdremote/ci.yml?branch=master&label=tests&labelColor=111114" alt="Tests"></a>
+  <a href="https://github.com/Pulsar-Interactive/tdremote/releases/latest"><img src="https://img.shields.io/github/v/release/Pulsar-Interactive/tdremote?label=release&labelColor=111114&color=FFB020" alt="Latest release"></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-05F9FE?labelColor=111114" alt="MIT license"></a>
 </p>
 
 <p align="center">
-  <a href="https://github.com/Pulsar-Interactive/td-remote/releases/latest/download/td-remote.tox"><b>Download td-remote.tox</b></a>
+  <a href="https://github.com/Pulsar-Interactive/tdremote/releases/latest/download/td-remote.tox"><b>Download td-remote.tox</b></a>
   &nbsp;·&nbsp;
   <a href="https://tdremote.pulsarinteractive.ai/">Website</a>
   &nbsp;·&nbsp;
@@ -32,7 +32,7 @@ internet: scan the code with the camera and the remote opens in the browser.
 
 ## Quick start
 
-1. **Add the component.** [Download `td-remote.tox`](https://github.com/Pulsar-Interactive/td-remote/releases/latest/download/td-remote.tox)
+1. **Add the component.** [Download `td-remote.tox`](https://github.com/Pulsar-Interactive/tdremote/releases/latest/download/td-remote.tox)
    from the latest release and drag it into your project, next to the COMPs you want to control.
 2. **Pick your controls.** On any of those COMPs, add a custom parameter page named
    **Controls** (right-click the COMP › Customize Component…). Put the parameters you want on
