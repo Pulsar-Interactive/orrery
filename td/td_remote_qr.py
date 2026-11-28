@@ -1,4 +1,4 @@
-# Text DAT `qr` inside the Orrery component: a QR code encoder in plain Python (byte mode, error
+# Text DAT `qr` inside the TD Remote component: a QR code encoder in plain Python (byte mode, error
 # correction M, versions 1-10, up to 213 bytes), so the component draws its own pairing QR with no
 # internet and nothing to install. matrix(text) returns rows of booleans, True = dark.
 

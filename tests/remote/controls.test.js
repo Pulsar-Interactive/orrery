@@ -1,5 +1,5 @@
 // Every kind of control on a panel, rendered from tests/fixtures/synth_state.json (the same
-// fixture the Python tests check orrery_callbacks.describe() against).
+// fixture the Python tests check td_remote_callbacks.describe() against).
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { load, STATE, clone } from './harness.js';

@@ -1,5 +1,5 @@
 // Loads td/remote.html in jsdom with a fake WebSocket and a fake clock, so each test can play
-// the part of the Orrery component and of the person holding the phone.
+// the part of the TD Remote component and of the person holding the phone.
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { JSDOM } from 'jsdom';
@@ -26,7 +26,7 @@ export function load({ url = 'http://192.168.1.20:9980/', stored = null } = {}) 
     runScripts: 'dangerously',
     pretendToBeVisual: true,
     beforeParse(window) {
-      if (stored !== null) window.localStorage.setItem('orrery-code', stored);
+      if (stored !== null) window.localStorage.setItem('td-remote-code', stored);
 
       // jsdom has no layout: every element is SLIDER_WIDTH wide, scrolling and pointer capture do nothing.
       Object.defineProperty(window.HTMLElement.prototype, 'clientWidth', { get: () => SLIDER_WIDTH, configurable: true });

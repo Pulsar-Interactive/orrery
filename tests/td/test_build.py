@@ -50,7 +50,7 @@ class BuildScriptTOP(ScriptTOP):
 def built(capsys):
 	top = BuildCOMP('')
 	home = BuildCOMP('project1', top)
-	old = BuildCOMP('orrery', home)
+	old = BuildCOMP('td_remote', home)
 	g = {
 		'op': lambda path: top.op(path),
 		'baseCOMP': BuildCOMP, 'textDAT': DAT, 'webserverDAT': ServerDAT, 'tableDAT': TableDAT, 'scriptTOP': BuildScriptTOP,
@@ -58,35 +58,35 @@ def built(capsys):
 		'TD_DIR': str(TD_DIR), '__name__': '__build__',
 	}
 	exec(compile((TD_DIR / 'build.py').read_text(encoding='utf-8'), str(TD_DIR / 'build.py'), 'exec'), g)
-	comp = home.op('orrery')
+	comp = home.op('td_remote')
 	return types.SimpleNamespace(home=home, old=old, comp=comp, out=capsys.readouterr().out)
 
 
-def page_pars(built, name='Orrery'):
+def page_pars(built, name='TD Remote'):
 	page = next(p for p in built.comp.customPages if p.name == name)
 	return page, {p.name: p for p in page.pars}
 
 
 def test_replaces_an_existing_component(built):
 	assert built.comp is not built.old
-	assert [c.name for c in built.home.children] == ['orrery']
+	assert [c.name for c in built.home.children] == ['td_remote']
 	assert built.old.parent() is None
 
 
 def test_component_basics(built):
 	assert built.comp.color == (0.31, 0.83, 0.87)
-	assert 'Orrery' in built.comp.comment
+	assert 'TD Remote' in built.comp.comment
 
 
-def test_pages_are_orrery_then_setup(built):
-	assert [p.name for p in built.comp.customPages] == ['Orrery', 'Setup']
+def test_pages_are_td_remote_then_setup(built):
+	assert [p.name for p in built.comp.customPages] == ['TD Remote', 'Setup']
 
 
 def test_setup_page(built):
 	page, _ = page_pars(built, 'Setup')
 	assert [(p.name, p.style, p.label) for p in page.pars] == [
 		('Okserver', 'Toggle', 'Server running'),
-		('Okcomps', 'Toggle', 'COMPs next to Orrery'),
+		('Okcomps', 'Toggle', 'COMPs next to TD Remote'),
 		('Okpage', 'Toggle', 'A Controls page on a COMP'),
 		('Okphone', 'Toggle', 'A phone is paired'),
 		('Nextstep', 'Str', 'Next Step'),
@@ -135,9 +135,9 @@ def test_port_range(built):
 
 
 def test_dats_hold_the_files(built):
-	for name, filename in (('callbacks', 'orrery_callbacks.py'), ('remote', 'remote.html'), ('qr', 'orrery_qr.py'),
-			('qrtop_callbacks', 'orrery_qrtop.py'), ('parexec', 'orrery_parexec.py'), ('settings', 'orrery_settings.py'),
-			('start', 'orrery_start.py')):
+	for name, filename in (('callbacks', 'td_remote_callbacks.py'), ('remote', 'remote.html'), ('qr', 'td_remote_qr.py'),
+			('qrtop_callbacks', 'td_remote_qrtop.py'), ('parexec', 'td_remote_parexec.py'), ('settings', 'td_remote_settings.py'),
+			('start', 'td_remote_start.py')):
 		assert built.comp.op(name).text == (TD_DIR / filename).read_text(encoding='utf-8'), name
 
 
@@ -159,7 +159,7 @@ def test_qr_top_draws_with_our_callbacks_only(built):
 	qt = built.comp.op('qrtop')
 	assert isinstance(qt, BuildScriptTOP)
 	assert qt.par.callbacks.eval() is built.comp.op('qrtop_callbacks')
-	# TouchDesigner's default callbacks DAT is removed, so only orrery_qrtop.py runs
+	# TouchDesigner's default callbacks DAT is removed, so only td_remote_qrtop.py runs
 	assert not any(c.name.endswith('_callbacks_default') for c in built.comp.children)
 
 
@@ -190,7 +190,7 @@ def test_settings_watches_the_component(built):
 
 def test_every_pulse_is_handled_by_settings(built):
 	pars = {**page_pars(built)[1], **page_pars(built, 'Setup')[1]}
-	settings_src = (TD_DIR / 'orrery_settings.py').read_text()
+	settings_src = (TD_DIR / 'td_remote_settings.py').read_text()
 	watched = built.comp.op('settings').par.pars.eval().split()
 	for name, p in pars.items():
 		if p.style == 'Pulse':
@@ -208,7 +208,7 @@ def test_start_rechecks_every_frame_end(built):
 
 def test_saved_without_a_code_then_started(built):
 	[(path, code)] = built.comp.saved
-	assert path == str(TD_DIR / 'orrery.tox')
+	assert path == str(TD_DIR / 'td-remote.tox')
 	assert code == ''
 	assert built.comp.unstored == ['*']
 	# onStart runs only after saving, so the code it makes stays out of the .tox
@@ -216,7 +216,7 @@ def test_saved_without_a_code_then_started(built):
 
 
 def test_prints_where_it_saved(built):
-	assert 'Orrery built and saved to %s' % (TD_DIR / 'orrery.tox') in built.out
+	assert 'TD Remote built and saved to %s' % (TD_DIR / 'td-remote.tox') in built.out
 
 
 def test_nodes_do_not_overlap(built):
@@ -245,7 +245,7 @@ def test_readme_lists_every_style_the_remote_handles():
 
 
 def test_protocol_comment_and_td_readme_agree():
-	cb = (TD_DIR / 'orrery_callbacks.py').read_text()
+	cb = (TD_DIR / 'td_remote_callbacks.py').read_text()
 	messages = re.findall(r'(->|<-) (\{.*?\})', TD_README)
 	assert messages
 	for arrow, msg in messages:

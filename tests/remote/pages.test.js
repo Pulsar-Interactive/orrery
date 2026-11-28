@@ -37,17 +37,17 @@ test('the remote is set up for phones', () => {
 test('the only outside link is the project page, opened safely', () => {
   const links = [...REMOTE.matchAll(/<a [^>]*>/g)].map((m) => m[0]);
   assert.equal(links.length, 1);
-  assert.match(links[0], /href="https:\/\/github\.com\/Pulsar-Interactive\/orrery"/);
+  assert.match(links[0], /href="https:\/\/github\.com\/Pulsar-Interactive\/td-remote"/);
   assert.match(links[0], /rel="noopener"/);
 });
 
 test('the product is never named TouchDesigner', () => {
   const title = REMOTE.match(/<title>(.*?)<\/title>/)[1];
   assert.doesNotMatch(title, /TouchDesigner/);
-  assert.match(title, /Orrery/);
+  assert.match(title, /TD Remote/);
 });
 
-test('the remote uses the Orrery colours', () => {
+test('the remote uses the TD Remote colours', () => {
   // page, raised surfaces, Sol Amber (brand) and the cyan used for selection
   for (const colour of ['#111114', '#1C1C1C', '#FFB020', '#05F9FE']) assert.ok(REMOTE.includes(colour), colour);
   assert.match(REMOTE, /<meta name="theme-color" content="#111114">/);

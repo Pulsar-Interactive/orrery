@@ -1,7 +1,7 @@
-# Builds the Orrery component from the files next to this script and saves it as orrery.tox.
+# Builds the TD Remote component from the files next to this script and saves it as td-remote.tox.
 # Run it in TouchDesigner's Textport:
-#   exec(open('/path/to/orrery/td/build.py').read(), dict(globals(), TD_DIR='/path/to/orrery/td'))
-# It replaces /project1/orrery if there is one. Drag td/orrery.tox into any project to use it.
+#   exec(open('/path/to/td-remote/td/build.py').read(), dict(globals(), TD_DIR='/path/to/td-remote/td'))
+# It replaces /project1/td_remote if there is one. Drag td/td-remote.tox into any project to use it.
 import os
 
 src = TD_DIR  # noqa: F821 (passed in by the exec call above)
@@ -11,15 +11,15 @@ def text(name):
 	with open(os.path.join(src, name), encoding='utf-8') as f:
 		return f.read()
 
-old = home.op('orrery')
+old = home.op('td_remote')
 if old:
 	old.destroy()
-comp = home.create(baseCOMP, 'orrery')
+comp = home.create(baseCOMP, 'td_remote')
 comp.nodeX, comp.nodeY = 0, -400
 comp.color = (0.31, 0.83, 0.87)
-comp.comment = 'Orrery: control this project from a phone. Pair with the address and code on its Orrery page.'
+comp.comment = 'TD Remote: control this project from a phone. Pair with the address and code on its TD Remote page.'
 
-page = comp.appendCustomPage('Orrery')
+page = comp.appendCustomPage('TD Remote')
 page.appendToggle('Active', label='Active')[0].default = True
 page.appendPulse('Showqr', label='Show QR')
 p = page.appendStr('Address', label='Address')[0]
@@ -43,7 +43,7 @@ comp.par.Root = '..'
 
 # The Setup page: what is still missing for the phone to work (filled in by settings.check_setup)
 sp = comp.appendCustomPage('Setup')
-for name, label in (('Okserver', 'Server running'), ('Okcomps', 'COMPs next to Orrery'),
+for name, label in (('Okserver', 'Server running'), ('Okcomps', 'COMPs next to TD Remote'),
 		('Okpage', 'A Controls page on a COMP'), ('Okphone', 'A phone is paired')):
 	sp.appendToggle(name, label=label)[0].readOnly = True
 sp.appendStr('Nextstep', label='Next Step')[0].readOnly = True
@@ -56,7 +56,7 @@ def ops_par(d):
 	return d.par.ops if hasattr(d.par, 'ops') else d.par.op
 
 cb = comp.create(textDAT, 'callbacks')
-cb.text = text('orrery_callbacks.py')
+cb.text = text('td_remote_callbacks.py')
 cb.nodeX, cb.nodeY = 0, 0
 
 # the phone remote, served at http://ADDRESS:PORT/
@@ -76,13 +76,13 @@ assets.nodeX, assets.nodeY = 200, 300
 
 # the pairing QR, drawn inside the component: Show QR opens qrtop in a viewer window
 qe = comp.create(textDAT, 'qr')
-qe.text = text('orrery_qr.py')
+qe.text = text('td_remote_qr.py')
 qe.nodeX, qe.nodeY = 200, 150
 qt = comp.create(scriptTOP, 'qrtop')
-for d in qt.docked:  # the default callbacks TouchDesigner makes; ours come from orrery_qrtop.py
+for d in qt.docked:  # the default callbacks TouchDesigner makes; ours come from td_remote_qrtop.py
 	d.destroy()
 qc = comp.create(textDAT, 'qrtop_callbacks')
-qc.text = text('orrery_qrtop.py')
+qc.text = text('td_remote_qrtop.py')
 qc.nodeX, qc.nodeY = 400, 300
 qt.par.callbacks = qc
 qt.nodeX, qt.nodeY = 400, 150
@@ -94,14 +94,14 @@ server.par.active.expr = "parent().par.Active"
 server.nodeX, server.nodeY = 200, 0
 
 pe = comp.create(parameterexecuteDAT, 'parexec')
-pe.text = text('orrery_parexec.py')
+pe.text = text('td_remote_parexec.py')
 pe.par.pars = '*'
 pe.par.valuechange = True
 pe.par.onpulse = False
 pe.nodeX, pe.nodeY = 0, -150
 
 st = comp.create(parameterexecuteDAT, 'settings')
-st.text = text('orrery_settings.py')
+st.text = text('td_remote_settings.py')
 ops_par(st).val = '..'
 st.par.pars = 'Port Root Page Onair Record Newcode Refresh Showqr Checksetup Help'
 st.par.valuechange = True
@@ -109,16 +109,16 @@ st.par.onpulse = True
 st.nodeX, st.nodeY = 200, -150
 
 ex = comp.create(executeDAT, 'start')
-ex.text = text('orrery_start.py')
+ex.text = text('td_remote_start.py')
 ex.par.start = True
 ex.par.create = True
 ex.par.frameend = True
 ex.nodeX, ex.nodeY = 400, -150
 
 # Saved without a pairing code: each project that loads the .tox makes its own (start / onCreate).
-tox = os.path.join(src, 'orrery.tox')
+tox = os.path.join(src, 'td-remote.tox')
 comp.par.Code = ''
 comp.unstore('*')
 comp.save(tox)
 ex.module.onStart()
-print('Orrery built and saved to %s. Press Show QR and scan it, or open %s on any device and enter %s.' % (tox, comp.par.Address, comp.par.Code))
+print('TD Remote built and saved to %s. Press Show QR and scan it, or open %s on any device and enter %s.' % (tox, comp.par.Address, comp.par.Code))
